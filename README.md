@@ -1,5 +1,5 @@
 # shellhelp
-![f5-lamp.sh](http://github-shellhelp.s3.amazonaws.com/f5-lamp.gif)
+![f5-lamp.sh](http://github-shellhelp.s3.amazonaws.com/f5-lamp-640.gif)
 ## Overview
 
 **shellhelp** is a collection of scripts to help automate provisioning new servers and maintaining existing infrastructure.
