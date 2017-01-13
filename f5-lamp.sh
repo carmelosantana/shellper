@@ -1,14 +1,18 @@
-#!/bin/sh
+#!/bin/bash
 # First 5 minutes LAMP installer
-# Version: 0.2.2
+# Version: 0.2.3
 # Tested: Ubuntu 16.04.1
 
 # TODO:
 # ☐ Add check if email is correct
-# ☐ Add additional IP loop for ufw
-# ☐ Startup?: sudo systemctl start php7.0-fpm
-# ☐ Restarts with systemctl: sudo systemctl restart apache2.service
 # ☐ Add http2
+# ☐ Add additional IP loop for ufw
+# ☐ Add create pem for deploy
+# ☐ Add no sudo password
+# ☐ Remove apache2 version header
+# ☐ Which?
+# 	☐ systemctl: systemctl restart apache2.service
+# 	☐ service: service apache2 restart
 
 # helpers
 file_change_append(){
@@ -45,9 +49,9 @@ file_change_append(){
 
 # start
 echo "
---------------------
-First 5 LAMP + Utils
---------------------
+---------------------
+First 5 Minutes: LAMP
+---------------------
 System:
   Distro update + upgrade
   Create sudo user
@@ -66,6 +70,7 @@ Services:
     fpm
 
 Utilities:
+  debian-keyring
   fish
   git
   htop
@@ -178,7 +183,7 @@ else
 fi
 sudo ufw allow 80
 sudo ufw allow 443
-sudo ufw -y enable
+echo y | sudo ufw enable
 
 # config unattended-upgrades
 sudo cat <<EOF >> /etc/apt/apt.conf.d/10periodic
@@ -272,10 +277,17 @@ else
 fi
 if echo "$answer" | grep -iq "^y"; then
 	UTILITIES=1
-	# install-webmin v0.1
-	wget http://www.webmin.com/jcameron-key.asc | sudo apt-key add jcameron-key.asc
+	# needed to add key
+	sudo apt-get install debian-keyring
+	
+	# setup key + repo
+	wget http://www.webmin.com/jcameron-key.asc
+	chmod 777 jcameron-key.asc
+	sudo apt-key add jcameron-key.asc
 	echo "deb http://download.webmin.com/download/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
 	echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
+	
+	# install webmin
 	sudo apt-get update | sudo apt-get install -y --allow-unauthenticated webmin
 
 	# utilities
@@ -326,9 +338,6 @@ echo "● phpinfo()"
 echo "127.0.0.1/info.php"
 if [ "$UTILITIES" = "1" ]; then
 	echo ""
-	echo "● Webmin"
-	echo "Click \"Refresh Modules\" to see recently installed services."
-	echo ""
 	echo "● Let's Encrypt"
 	echo "letsencrypt --apache -d site.com"
 	echo "letsencrypt certonly --standalone --email you@site.com --agree-tos -d site.com -d site2.com"
@@ -366,4 +375,5 @@ echo ""
 # https://www.digitalocean.com/community/tutorials/how-to-set-up-mod_security-with-apache-on-debian-ubuntu
 # https://www.howtoforge.com/tutorial/apache-with-php-fpm-on-ubuntu-16-04/
 # http://www.andrewault.net/2010/05/17/securing-an-ubuntu-server/
+# http://askubuntu.com/questions/556385/how-can-i-install-apt-packages-non-interactively
 # http://superuser.com/questions/228173/whats-the-difference-between-mod-fastcgi-and-mod-fcgid#514555
