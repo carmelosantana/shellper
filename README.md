@@ -25,5 +25,3 @@ Choose which file to run, for this example we'll use [f5-lamp.sh](https://raw.gi
 
 ## License
 [MIT](http://opensource.org/licenses/MIT)
-
-Copyright (c) 2017-present, Carmelo Santana
