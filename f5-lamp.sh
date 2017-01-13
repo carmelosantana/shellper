@@ -1,6 +1,6 @@
 #!/bin/sh
 # First 5 minutes LAMP installer
-# Version: 0.2.1
+# Version: 0.2.2
 # Tested: Ubuntu 16.04.1
 
 # TODO:
@@ -16,9 +16,13 @@ file_change_append(){
 	BAKFILE="$1.bak"
 	TMPFILE="$1.tmp"
 
-	cp -f $INFILE $TMPFILE
+	# backup
+	sudo cp -f $INFILE $BAKFILE
 
-	touch $TMPFILE
+	# create
+	sudo touch $TMPFILE
+
+	# check for line to edit
 	while read -r line || [[ -n "$line" ]]; do
 	    if [ `echo "$line" | grep -c -P "^\s*$2\s+"` = "1" ]; then
 	        match=1
@@ -27,14 +31,15 @@ file_change_append(){
 	        echo "$line" >> $TMPFILE
 	    fi
 	done < $INFILE
-
-	if [ "$match" != "1" ]; then
+	
+	# append option if not found in config
+	if [ "$match" != "1" ] && [ "$4" = "1" ]; then
 	    echo "" >> $TMPFILE
 	    echo "$2 $3" >> $TMPFILE
 	fi
 
-	# cp -f $TMPFILE $INFILE
-	mv $TMPFILE $INFILE
+	# sudo cp -f $TMPFILE $INFILE
+	sudo mv $TMPFILE $INFILE
 	sync	
 }
 
@@ -63,6 +68,7 @@ Services:
 Utilities:
   fish
   git
+  htop
   logwatch
   postfix
   python-letsencrypt-apache
@@ -94,7 +100,7 @@ sudo apt-get upgrade -y
 if [ "$UNATTENDED" = "1" ]; then
 	answer="y"
 else
-	echo -n "Use 'deploy' for the new sudo username? (ENTER_CUSTOM|y) "
+	echo -n "Use 'deploy' for the new sudo username? (Enter a custom username|y) "
 	read answer
 fi
 if echo "$answer" | grep -iq "^y"; then
@@ -141,16 +147,16 @@ if [ "$UNATTENDED" = "0" ]; then
 	echo -n "Command may disrupt existing ssh connections. Proceed with operation? (y|n) "
 	read answer
 	if echo "$answer" | grep -iq "^y"; then
-		ssh_reminder=0
+		SSH_REMINDER=0
 		sudo service ssh restart
 	else 
-		ssh_reminder=1
+		SSH_REMINDER=1
 	fi
 fi
 
 # edit sshd_config
 if [ "$authorized_keys" != "0" ]; then
-	file_change_append "/etc/ssh/sshd_config" "PermitRootLogin" "no"
+	file_change_append "/etc/ssh/sshd_config" "PermitRootLogin" "no" 1
 fi
 
 # security
@@ -172,7 +178,7 @@ else
 fi
 sudo ufw allow 80
 sudo ufw allow 443
-sudo ufw enable
+sudo ufw -y enable
 
 # config unattended-upgrades
 sudo cat <<EOF >> /etc/apt/apt.conf.d/10periodic
@@ -188,8 +194,8 @@ sudo apt-get -y install apache2 apache2-utils
 sudo apt-get -y install libapache2-modsecurity
 
 # config modsecurity
-cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
-file_change_append "/etc/modsecurity/modsecurity.conf" "SecRuleEngine" "On"
+sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
+file_change_append "/etc/modsecurity/modsecurity.conf" "SecRuleEngine" "On" 0
 sudo service apache2 restart
 
 # mysql
@@ -240,7 +246,7 @@ sudo service apache2 restart
 if [ "$UNATTENDED" = "1" ]; then
 	answer=1
 else
-	echo -n 'Install (1)WordPress Recommended (2)WordPress Minimum (3)All debian.org packages (1|2|3) '
+	echo -n 'Install PHP modules: (1)WordPress Recommended (2)WordPress Minimum (3)All debian.org packages (1|2|3) '
 	read answer
 fi
 if echo "$answer" | grep -iq "^3"; then
@@ -273,7 +279,8 @@ if echo "$answer" | grep -iq "^y"; then
 	sudo apt-get update | sudo apt-get install -y --allow-unauthenticated webmin
 
 	# utilities
-	sudo apt-get -y install fish git logwatch postfix python-letsencrypt-apache screen
+	sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postfix
+	sudo apt-get -y install fish git htop logwatch python-letsencrypt-apache screen
 
 	# cron
 	if [ "$UNATTENDED" = "0" ]; then
@@ -282,7 +289,7 @@ if echo "$answer" | grep -iq "^y"; then
 		if echo "$answer" | grep -iq "^n"; then
 			echo ""
 		else	
-			sudo echo "/usr/sbin/logwatch --output mail --mailto $answer --detail high" > /etc/cron.hourly/logwatch
+			sudo echo "/usr/sbin/logwatch --output mail --mailto $answer --detail high" > /etc/cron.daily/logwatch
 		fi
 	fi
 else
@@ -328,11 +335,18 @@ if [ "$UTILITIES" = "1" ]; then
 fi
 if [ "$UNATTENDED" = "1" ]; then
 	echo ""
-	echo "● Unattended"
+	echo "● Skipped"
 	echo "These commands were skipped during unattended installation:"
 	echo "sudo passwd $USER"
 	echo "sudo service ssh restart"
 	echo "mysql_secure_installation"
+else
+	if [ "$SSH_REMINDER" = "1" ]; then
+		echo ""
+		echo "● Skipped"
+		echo "These commands were skipped during installation:"
+		echo "sudo service ssh restart"
+	fi
 fi
 
 # thats it
