@@ -1,5 +1,9 @@
 # shellhelp
-![f5-lamp.sh](http://github-shellhelp.s3.amazonaws.com/f5-lamp-640.gif)
+
+<p align="center">
+<img src="https://github-shellhelp.s3.amazonaws.com/f5-lamp-640.gif" />
+</p>
+
 ## Overview
 
 **shellhelp** is a collection of scripts to help automate provisioning new servers and maintaining existing infrastructure.
@@ -20,4 +24,6 @@ Choose which file to run, for this example we'll use [f5-lamp.sh](https://raw.gi
 * [**install-webmin.sh**](https://raw.githubusercontent.com/carmelosantana/shellhelp/master/install-webmin.sh)
 
 ## License
-The MIT License (MIT) 
+[MIT](http://opensource.org/licenses/MIT)
+
+Copyright (c) 2017-present, Carmelo Santana
