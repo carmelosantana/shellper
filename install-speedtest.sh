@@ -6,7 +6,7 @@ echo "Install Speedtest CLI?"
 echo -n "Press y|Y to continue, any other key for No: "
 read answer
 if echo "$answer" | grep -iq "^y" ;then
-	sudo apt-get install python-pip --fix-missing
+	sudo apt-get install python-pip
 	pip install speedtest-cli
 	speedtest-cli
 fi
