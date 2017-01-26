@@ -5,14 +5,16 @@
 
 # TODO:
 # ☐ Add check if email is correct
-# ☐ Add http2
+# ☐ Add apache config
+# 	☐ http2
+# 	☐ apache2 version header
 # ☐ Add additional IP loop for ufw
 # ☐ Add create pem for deploy
 # ☐ Add no sudo password
-# ☐ Remove apache2 version header
 # ☐ Which?
 # 	☐ systemctl: systemctl restart apache2.service
 # 	☐ service: service apache2 restart
+# ☐ Fix interrupted Debian install (mariaDB password prompt)
 
 # helpers
 file_change_append(){
@@ -101,68 +103,73 @@ fi
 sudo apt-get update
 sudo apt-get upgrade -y
 
-# username
+# username or skip
 if [ "$UNATTENDED" = "1" ]; then
 	answer="y"
 else
-	echo -n "Use 'deploy' for the new sudo username? (Enter a custom username|y) "
+	echo -n "Enter another username, continue with 'deploy' or skip sudo user creation. (y|n=skip)"
 	read answer
 fi
-if echo "$answer" | grep -iq "^y"; then
-	USER="deploy"
-else
-	USER=$answer
-fi
-sudo useradd $USER
-sudo mkdir /home/$USER
-sudo mkdir /home/$USER/.ssh
-sudo chmod 700 /home/$USER/.ssh
-sudo chsh -s /bin/bash $USER
-sudo cp .bashrc .profile /home/$USER
-
-# copy keys
-authorized_keys="/root/.ssh/authorized_keys"
-if [ -f "$authorized_keys" ]; then
-	sudo cp $authorized_keys /home/$USER/.ssh/authorized_keys
-	sudo chmod 400 /home/$USER/.ssh/authorized_keys
-else
-	authorized_keys=0
-fi
-
-# finish setting up user
-sudo chown $USER:$USER /home/$USER -R
-if [ "$UNATTENDED" = "0" ]; then
-	sudo passwd $USER
-fi
-
-# safe sudoers edit
-if [ -e /etc/sudoers.tmp -o "$(pidof visudo)" ]; then 
-	echo "/etc/sudoers busy, try again later"
-else
-	cp /etc/sudoers /etc/sudoers.bak
-	cp /etc/sudoers /etc/sudoers.tmp
-	chmod 0740 /etc/sudoers.tmp
-	echo "$USER  ALL=(ALL:ALL) ALL" >> /etc/sudoers.tmp
-	chmod 0440 /etc/sudoers.tmp
-	mv /etc/sudoers.tmp /etc/sudoers
-fi
-
-# restart SSH?
-if [ "$UNATTENDED" = "0" ]; then
-	echo -n "Command may disrupt existing ssh connections. Proceed with operation? (y|n) "
-	read answer
+# continue?
+if echo "$answer" | grep -iq "^n"; then
+	echo -n "Skipping sudo user creation."
+else	
 	if echo "$answer" | grep -iq "^y"; then
-		SSH_REMINDER=0
-		sudo service ssh restart
-	else 
-		SSH_REMINDER=1
+		USER="deploy"
+	else
+		USER=$answer
 	fi
-fi
+	sudo useradd $USER
+	sudo mkdir /home/$USER
+	sudo mkdir /home/$USER/.ssh
+	sudo chmod 700 /home/$USER/.ssh
+	sudo chsh -s /bin/bash $USER
+	sudo cp .bashrc .profile /home/$USER
 
-# edit sshd_config
-if [ "$authorized_keys" != "0" ]; then
-	file_change_append "/etc/ssh/sshd_config" "PermitRootLogin" "no" 1
-fi
+	# copy keys
+	authorized_keys="/root/.ssh/authorized_keys"
+	if [ -f "$authorized_keys" ]; then
+		sudo cp $authorized_keys /home/$USER/.ssh/authorized_keys
+		sudo chmod 400 /home/$USER/.ssh/authorized_keys
+	else
+		authorized_keys=0
+	fi
+
+	# finish setting up user
+	sudo chown $USER:$USER /home/$USER -R
+	if [ "$UNATTENDED" = "0" ]; then
+		sudo passwd $USER
+	fi
+
+	# safe sudoers edit
+	if [ -e /etc/sudoers.tmp -o "$(pidof visudo)" ]; then 
+		echo "/etc/sudoers busy, try again later"
+	else
+		cp /etc/sudoers /etc/sudoers.bak
+		cp /etc/sudoers /etc/sudoers.tmp
+		chmod 0740 /etc/sudoers.tmp
+		echo "$USER  ALL=(ALL:ALL) ALL" >> /etc/sudoers.tmp
+		chmod 0440 /etc/sudoers.tmp
+		mv /etc/sudoers.tmp /etc/sudoers
+	fi
+
+	# restart SSH?
+	if [ "$UNATTENDED" = "0" ]; then
+		echo -n "Command may disrupt existing ssh connections. Proceed with operation? (y|n) "
+		read answer
+		if echo "$answer" | grep -iq "^y"; then
+			SSH_REMINDER=0
+			sudo service ssh restart
+		else 
+			SSH_REMINDER=1
+		fi
+	fi
+
+	# edit sshd_config
+	if [ "$authorized_keys" != "0" ]; then
+		file_change_append "/etc/ssh/sshd_config" "PermitRootLogin" "no" 1
+	fi
+fi	
 
 # security
 sudo apt-get -y install fail2ban ufw
@@ -193,7 +200,19 @@ APT::Periodic::Unattended-Upgrade "1";
 EOF
 
 # apache2
-sudo apt-get -y install apache2 apache2-utils
+if [ "$UNATTENDED" = "1" ]; then
+	answer=1
+else
+	echo -n "Install Apache from (1)Distro PPA (2)PPA:ondrej/apache2 (1|2) "
+	read answer
+fi
+if echo "$answer" | grep -iq "1"; then
+	sudo apt-get -y install apache2 apache2-utils
+else
+	sudo add-apt-repository ppa:ondrej/apache2
+	sudo apt-get update
+	sudo apt-get -y install apache2 apache2-utils
+fi
 
 # modsecurity
 sudo apt-get -y install libapache2-modsecurity
