@@ -1,8 +1,6 @@
 #!/bin/sh
 # Geekbench Installer
-# Version 0.2.1
-echo "Install+run geekbench?"
-echo -n "Press y|Y to continue, any other key for No: "
+echo -n "Install + run geekbench? (y|n)"
 read answer
 if echo "$answer" | grep -iq "^y" ; then
 	wget http://cdn.primatelabs.com/Geekbench-4.0.1-Linux.tar.gz
