@@ -1,13 +1,18 @@
 #!/bin/bash
 # First 5 minutes LAMP installer
-# Version: 0.2.3
-# Tested: Ubuntu 16.04.1
+# Version: 0.2.5
+
+# Distros:
+# ✔ Ubuntu 16.04.1
+
+# Hosts:
+# ✔ Baremetal
+# ✔ AWS EC2
+# ✔ GoDaddy Cloud
+# ✔ Linode
 
 # TODO:
 # ☐ Add check if email is correct
-# ☐ Add apache config
-# 	☐ http2
-# 	☐ apache2 version header
 # ☐ Add additional IP loop for ufw
 # ☐ Add create pem for deploy
 # ☐ Add no sudo password
@@ -49,7 +54,7 @@ file_change_append(){
 	sync	
 }
 
-# start
+# Start
 echo "
 ---------------------
 First 5 Minutes: LAMP
@@ -72,15 +77,9 @@ Services:
     fpm
 
 Utilities:
-  debian-keyring
-  fish
-  git
-  htop
   logwatch
   postfix
-  python-letsencrypt-apache
-  screen
-  Webmin"
+  python-letsencrypt-apache"
 
 # continue with this?
 echo ""
@@ -107,7 +106,7 @@ sudo apt-get upgrade -y
 if [ "$UNATTENDED" = "1" ]; then
 	answer="y"
 else
-	echo -n "Enter another username, continue with 'deploy' or skip sudo user creation. (y|n=skip)"
+	echo -n "Enter another username, continue with 'deploy' or skip sudo user creation. (y=deploy|n=skip)"
 	read answer
 fi
 # continue?
@@ -270,7 +269,7 @@ sudo service apache2 restart
 if [ "$UNATTENDED" = "1" ]; then
 	answer=1
 else
-	echo -n 'Install PHP modules: (1)WordPress Recommended (2)WordPress Minimum (3)All debian.org packages (1|2|3) '
+	echo -n 'Install PHP modules: (1)Recommended (2)Minimum (3)All debian.org packages (1|2|3) '
 	read answer
 fi
 if echo "$answer" | grep -iq "^3"; then
@@ -287,45 +286,20 @@ fi
 # www extras
 sudo echo "<?php phpinfo();" > /var/www/html/info.php
 
-# Install utilities
-if [ "$UNATTENDED" = "1" ]; then
-	answer="y"
-else
-	echo -n "Install utilities? (y|n) "
+# utilities
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postfix
+sudo apt-get -y install logwatch python-letsencrypt-apache
+
+# cron
+if [ "$UNATTENDED" = "0" ]; then
+	echo -n "Setup daily email for critical entries via cron.daily? (enter@youremail.com|n) "
 	read answer
-fi
-if echo "$answer" | grep -iq "^y"; then
-	UTILITIES=1
-	# needed to add key
-	sudo apt-get install debian-keyring
-	
-	# setup key + repo
-	wget http://www.webmin.com/jcameron-key.asc
-	chmod 777 jcameron-key.asc
-	sudo apt-key add jcameron-key.asc
-	echo "deb http://download.webmin.com/download/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
-	echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
-	
-	# install webmin
-	sudo apt-get update | sudo apt-get install -y --allow-unauthenticated webmin
-
-	# utilities
-	sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postfix
-	sudo apt-get -y install fish git htop logwatch python-letsencrypt-apache screen
-
-	# cron
-	if [ "$UNATTENDED" = "0" ]; then
-		echo -n "Setup daily email for critical entries via cron.daily? (enter@youremail.com|n) "
-		read answer
-		if echo "$answer" | grep -iq "^n"; then
-			echo ""
-		else	
-			sudo echo "/usr/sbin/logwatch --output mail --mailto $answer --detail high" > /etc/cron.daily/logwatch
-		fi
+	if echo "$answer" | grep -iq "^n"; then
+		echo ""
+	else	
+		sudo echo "/usr/sbin/logwatch --output mail --mailto $answer --detail high" > /etc/cron.daily/logwatch
 	fi
-else
-	UTILITIES=0
-fi	
+fi
 
 # status
 echo ""
@@ -355,12 +329,10 @@ echo "Run 'dpkg-reconfigure tzdata' if you wish to change it."
 echo ""
 echo "● phpinfo()"
 echo "127.0.0.1/info.php"
-if [ "$UTILITIES" = "1" ]; then
-	echo ""
-	echo "● Let's Encrypt"
-	echo "letsencrypt --apache -d site.com"
-	echo "letsencrypt certonly --standalone --email you@site.com --agree-tos -d site.com -d site2.com"
-fi
+echo ""
+echo "● Let's Encrypt"
+echo "letsencrypt --apache -d site.com"
+echo "letsencrypt certonly --standalone --email you@site.com --agree-tos -d site.com -d site2.com"
 if [ "$UNATTENDED" = "1" ]; then
 	echo ""
 	echo "● Skipped"
