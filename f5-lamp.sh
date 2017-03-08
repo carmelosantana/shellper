@@ -351,9 +351,9 @@ fi
 
 # thats it
 echo ""
-echo "-----------------"
-echo "Install complete!"
-echo "-----------------"
+echo "ToDo"
+echo "----"
+echo "☐ Add SSL certificate to postfix"
 echo ""
 
 # Sources:
