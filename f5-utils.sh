@@ -13,6 +13,7 @@
 
 # TODO:
 # ☐ Add bzopen, bzcompress
+# ☐ Check if logwatch cron is working
 
 # Start
 echo "
@@ -26,6 +27,7 @@ Utilities:
   debian-keyring
   fish
   git
+  glances
   htop
   screen
   Webmin"
@@ -66,7 +68,7 @@ sudo apt-get update | sudo apt-get install -y --allow-unauthenticated webmin
 
 # utilities
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postfix
-sudo apt-get -y install fish git htop screen
+sudo apt-get -y install fish git glances htop screen
 
 # cron
 if [ "$UNATTENDED" = "0" ]; then
