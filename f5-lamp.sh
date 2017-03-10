@@ -14,12 +14,8 @@
 # TODO:
 # ☐ Add check if email is correct
 # ☐ Add additional IP loop for ufw
-# ☐ Add create pem for deploy
+# ☐ Set hostname
 # ☐ Add no sudo password
-# ☐ Which?
-# 	☐ systemctl: systemctl restart apache2.service
-# 	☐ service: service apache2 restart
-# ☐ Fix interrupted Debian install (mariaDB password prompt)
 
 # helpers
 file_change_append(){
@@ -90,7 +86,7 @@ if echo "$answer" | grep -iq "^n"; then
 fi
 
 # unattended
-echo -n "Unattended install? (y|n) "
+echo -n "(mostly) Unattended install? (y|n) "
 read answer
 if echo "$answer" | grep -iq "^y"; then
 	UNATTENDED=1
@@ -125,15 +121,6 @@ else
 	sudo chsh -s /bin/bash $USER
 	sudo cp .bashrc .profile /home/$USER
 
-	# copy keys
-	authorized_keys="/root/.ssh/authorized_keys"
-	if [ -f "$authorized_keys" ]; then
-		sudo cp $authorized_keys /home/$USER/.ssh/authorized_keys
-		sudo chmod 400 /home/$USER/.ssh/authorized_keys
-	else
-		authorized_keys=0
-	fi
-
 	# finish setting up user
 	sudo chown $USER:$USER /home/$USER -R
 	if [ "$UNATTENDED" = "0" ]; then
@@ -158,15 +145,25 @@ else
 		read answer
 		if echo "$answer" | grep -iq "^y"; then
 			SSH_REMINDER=0
-			sudo service ssh restart
+			sudo systemctl restart ssh.service
 		else 
 			SSH_REMINDER=1
 		fi
-	fi
 
-	# edit sshd_config
-	if [ "$authorized_keys" != "0" ]; then
-		file_change_append "/etc/ssh/sshd_config" "PermitRootLogin" "no" 1
+		# edit sshd_config
+		echo -n "Steps for generating login keys:
+(On your machine)
+ssh-keygen -t rsa -b 2048 -v
+ssh-copy-id -f -i FILE_NAME.pub $USER@SERVER_IP
+mv FILE_NAME FILE_NAME.pem
+sudo chmod 400 FILE_NAME.pem
+sudo ssh -i FILE_NAME.pem $USER@SERVER_IP
+
+Conitinue with PermitRootLogin no?(y|n) "
+		read answer
+		if echo "$answer" | grep -iq "^y"; then
+			file_change_append "/etc/ssh/sshd_config" "PermitRootLogin" "no" 1
+		fi		
 	fi
 fi	
 
@@ -202,10 +199,10 @@ EOF
 if [ "$UNATTENDED" = "1" ]; then
 	answer=1
 else
-	echo -n "Install Apache from (1)Distro PPA (2)PPA:ondrej/apache2 (1|2) "
+	echo -n "Install Apache from (1)PPA:ondrej/apache2 (2)Distro PPA (1|2) "
 	read answer
 fi
-if echo "$answer" | grep -iq "1"; then
+if echo "$answer" | grep -iq "2"; then
 	sudo apt-get -y install apache2 apache2-utils
 else
 	sudo add-apt-repository ppa:ondrej/apache2
@@ -219,7 +216,7 @@ sudo apt-get -y install libapache2-modsecurity
 # config modsecurity
 sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
 file_change_append "/etc/modsecurity/modsecurity.conf" "SecRuleEngine" "On" 0
-sudo service apache2 restart
+sudo systemctl restart apache2.service
 
 # mysql
 if [ "$UNATTENDED" = "1" ]; then
@@ -252,18 +249,28 @@ else
 	sudo apt-get -y install libapache2-mod-fastcgi php7.0-fpm php7.0
 	a2enmod actions fastcgi alias
 	sudo cat <<EOF >> /etc/apache2/sites-available/000-default.conf
-<Directory /usr/lib/cgi-bin>
-    Require all granted
-</Directory>
-<IfModule mod_fastcgi.c>
-	AddHandler php7-fcgi .php
-	Action php7-fcgi /php7-fcgi
-	Alias /php7-fcgi /usr/lib/cgi-bin/php7-fcgi
-	FastCgiExternalServer /usr/lib/cgi-bin/php7-fcgi -socket /var/run/php/php7.0-fpm.sock -pass-header Authorization
+# Redirect to local php-fpm if mod_php is not available
+<IfModule !mod_php7.c>
+    # Enable http authorization headers
+    SetEnvIfNoCase ^Authorization$ "(.+)" HTTP_AUTHORIZATION=$1
+
+    <FilesMatch ".+\.ph(p[3457]?|t|tml)$">
+        SetHandler "proxy:unix:/run/php/php7.0-fpm.sock|fcgi://localhost"
+    </FilesMatch>
+    <FilesMatch ".+\.phps$">
+        # Deny access to raw php sources by default
+        # To re-enable it's recommended to enable access to the files
+        # only in specific virtual host or directory
+        Require all denied
+    </FilesMatch>
+    # Deny access to files without filename (e.g. '.php')
+    <FilesMatch "^\.ph(p[3457]?|t|tml|ps)$">
+        Require all denied
+    </FilesMatch>
 </IfModule>
 EOF
 fi
-sudo service apache2 restart
+sudo systemctl restart apache2.service
 
 # php packages
 if [ "$UNATTENDED" = "1" ]; then
@@ -302,6 +309,7 @@ if [ "$UNATTENDED" = "0" ]; then
 fi
 
 # status
+echo "Install complete."
 echo ""
 echo "------"
 echo "Status"
@@ -338,14 +346,14 @@ if [ "$UNATTENDED" = "1" ]; then
 	echo "● Skipped"
 	echo "These commands were skipped during unattended installation:"
 	echo "sudo passwd $USER"
-	echo "sudo service ssh restart"
+	echo "sudo systemctl restart ssh.service"
 	echo "mysql_secure_installation"
 else
 	if [ "$SSH_REMINDER" = "1" ]; then
 		echo ""
 		echo "● Skipped"
 		echo "These commands were skipped during installation:"
-		echo "sudo service ssh restart"
+		echo "sudo systemctl restart ssh.service"		
 	fi
 fi
 
