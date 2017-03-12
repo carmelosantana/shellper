@@ -14,8 +14,8 @@
 # TODO:
 # ☐ Add check if email is correct
 # ☐ Add additional IP loop for ufw
-# ☐ Set hostname
 # ☐ Add no sudo password
+# ☐ sudo ufw limit ssh - rate limit SSH
 
 # helpers
 file_change_append(){
@@ -81,6 +81,16 @@ Utilities:
 echo ""
 echo -n "Continue? (y|n) "
 read answer
+if echo "$answer" | grep -iq "^n"; then
+	exit 1
+fi
+
+# hostname reminder
+echo "Current hostname:"
+hostname
+hostname -f 
+echo -n "Continue with current hostname? (y|n)"
+read answer	
 if echo "$answer" | grep -iq "^n"; then
 	exit 1
 fi
@@ -362,6 +372,10 @@ echo ""
 echo "ToDo"
 echo "----"
 echo "☐ Add SSL certificate to postfix"
+echo "☐ Remove /var/www/html/info.php"
+if [ "$UNATTENDED" = "1" ]; then
+	echo "☐ Update hostname (apache2.service may fail to start without proper hostname)"
+fi
 echo ""
 
 # Sources:
