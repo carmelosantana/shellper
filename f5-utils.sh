@@ -42,14 +42,10 @@ fi
 sudo apt-get update
 sudo apt-get upgrade -y
 
-# apt
-curl -s http://www.webmin.com/jcameron-key.asc | sudo apt-key add -
-echo "deb http://download.webmin.com/download/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
-echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
-
-# install webmin
-sudo apt-get update
-sudo apt-get install -y webmin
+# webmin
+wget https://raw.githubusercontent.com/carmelosantana/shellper/master/install-webmin.sh
+chmod +x install-webmin.sh
+sudo ./install-webmin.sh
 
 # utilities
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postfix
