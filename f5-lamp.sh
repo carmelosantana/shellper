@@ -69,6 +69,7 @@ Services:
   apache2
     modsecurity
   MariaDB or MySQL
+  Memcached
   PHP7
     fpm
 
@@ -161,7 +162,9 @@ else
 		fi
 
 		# edit sshd_config
-		echo -n "Steps for generating login keys:
+		echo -n "
+Steps for generating login keys:
+
 (On your machine)
 ssh-keygen -t rsa -b 2048 -v
 ssh-copy-id -f -i FILE_NAME.pub $USER@SERVER_IP
@@ -298,6 +301,20 @@ elif echo "$answer" | grep -iq "^2"; then
 else
 	# Recommended
 	sudo apt-get -y install php7.0-cli php7.0-common php7.0-curl php7.0-gd php7.0-json php7.0-mbstring php7.0-mcrypt php7.0-mysql php7.0-opcache php7.0-pspell php7.0-readline php7.0-snmp php7.0-soap php7.0-sqlite3 php7.0-xml php7.0-xmlrpc php7.0-xsl php7.0-zip php-memcached
+
+	# memcache
+	if [ "$UNATTENDED" = "1" ]; then
+		answer="y"
+	else
+		echo -n "Install Memcached (y|n) "
+		read answer
+	fi
+	if echo "$answer" | grep -iq "^y"; then
+		MEMCACHED=1
+		sudo apt-get -y install memcached
+	else
+		MEMCACHED=0	
+	fi
 fi
 
 # www extras
@@ -334,6 +351,11 @@ echo "$(systemctl status mysql)"
 if [ "$FPM" = "1" ]; then
 	echo ""
 	echo "$(systemctl status php7.0-fpm)"
+fi
+echo ""
+if [ "$MEMCACHED" = "1" ]; then
+	echo ""
+	echo "$(systemctl status memcached)"
 fi
 echo ""
 echo "$(systemctl status ufw)"
