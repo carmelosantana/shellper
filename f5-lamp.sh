@@ -3,17 +3,9 @@
 # Version: 0.2.5
 
 # Distros:
-# ✔ Ubuntu 16.04.1
-
-# Hosts:
-# ✔ Baremetal
-# ✔ AWS EC2
-# ✔ GoDaddy Cloud
-# ✔ Linode
+# ✔ Ubuntu 16.04.2
 
 # TODO:
-# ☐ Add check if email is correct
-# ☐ Add additional IP loop for ufw
 # ☐ Add no sudo password
 # ☐ sudo ufw limit ssh - rate limit SSH
 
@@ -74,7 +66,6 @@ Services:
     fpm
 
 Utilities:
-  logwatch
   postfix
   python-letsencrypt-apache"
 
@@ -82,16 +73,6 @@ Utilities:
 echo ""
 echo -n "Continue? (y|n) "
 read answer
-if echo "$answer" | grep -iq "^n"; then
-	exit 1
-fi
-
-# hostname reminder
-echo "Current hostname:"
-hostname
-hostname -f 
-echo -n "Continue with current hostname? (y|n)"
-read answer	
 if echo "$answer" | grep -iq "^n"; then
 	exit 1
 fi
@@ -215,13 +196,13 @@ else
 	echo -n "Install Apache from (1)PPA:ondrej/apache2 (2)Distro PPA (1|2) "
 	read answer
 fi
-if echo "$answer" | grep -iq "2"; then
-	sudo apt-get -y install apache2 apache2-utils
-else
-	sudo add-apt-repository ppa:ondrej/apache2
+ONDREJ_APACHE2=0
+if echo "$answer" | grep -iq "1"; then
+	ONDREJ_APACHE2=1
+	echo | sudo add-apt-repository ppa:ondrej/apache2
 	sudo apt-get update
-	sudo apt-get -y install apache2 apache2-utils
 fi
+sudo apt-get -y install apache2 apache2-utils
 
 # modsecurity
 sudo apt-get -y install libapache2-modsecurity
@@ -238,7 +219,7 @@ else
 	echo -n "Install (1)MariaDB (2)MySQL (1|2) "
 	read answer
 fi
-if echo "$answer" | grep -iq "^2"; then
+if echo "$answer" | grep -iq "2"; then
 	sudo apt-get -y install mysql-server mysql-client
 else	
 	sudo apt-get -y install mariadb-server mariadb-client
@@ -251,78 +232,35 @@ fi
 if [ "$UNATTENDED" = "1" ]; then
 	answer=1
 else
-	echo -n "Install (1)libapache2-mod-fastcgi php7.0-fpm (2)libapache2-mod-php7.0 (1|2) "
+	echo -n "Install (1)php7.1-fpm (2)php7.0-fpm (1|2) "
 	read answer
 fi
-if echo "$answer" | grep -iq "^2"; then
-	FPM=0
-	sudo apt-get -y install libapache2-mod-php7.0 php7.0
+if echo "$answer" | grep -iq "2"; then
+	ONDREJ_PHP=0
+	PHP="php7.0"
 else
-	FPM=1
-	sudo apt-get -y install libapache2-mod-fastcgi php7.0-fpm php7.0
-	a2enmod actions fastcgi alias
-	sudo cat <<EOF >> /etc/apache2/sites-available/000-default.conf
-# Redirect to local php-fpm if mod_php is not available
-<IfModule !mod_php7.c>
-    # Enable http authorization headers
-    SetEnvIfNoCase ^Authorization$ "(.+)" HTTP_AUTHORIZATION=$1
+	ONDREJ_PHP=1
+	PHP="php7.1"
+	echo | sudo add-apt-repository ppa:ondrej/php
+	sudo apt-get update
+fi
+export PHP
+sudo apt-get -y install libapache2-mod-fastcgi $PHP $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-json $PHP-mbstring $PHP-mcrypt $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xmlrpc $PHP-xsl $PHP-zip php-memcached
+sudo ln -rs "/etc/apache2/conf-available/$PHP-fpm.conf" "/etc/apache2/conf-enabled/$PHP-fpm.conf"
 
-    <FilesMatch ".+\.ph(p[3457]?|t|tml)$">
-        SetHandler "proxy:unix:/run/php/php7.0-fpm.sock|fcgi://localhost"
-    </FilesMatch>
-    <FilesMatch ".+\.phps$">
-        # Deny access to raw php sources by default
-        # To re-enable it's recommended to enable access to the files
-        # only in specific virtual host or directory
-        Require all denied
-    </FilesMatch>
-    # Deny access to files without filename (e.g. '.php')
-    <FilesMatch "^\.ph(p[3457]?|t|tml|ps)$">
-        Require all denied
-    </FilesMatch>
-</IfModule>
-EOF
+# apache modules
+sudo a2enmod actions expires proxy_fcgi proxy_http rewrite ssl vhost_alias
+if [ "$ONDREJ_APACHE2" = "1" ]; then
+	sudo a2enmod http2 proxy_http2
 fi
 sudo systemctl restart apache2.service
-
-# php packages
-if [ "$UNATTENDED" = "1" ]; then
-	answer=1
-else
-	echo -n 'Install PHP modules: (1)Recommended (2)Minimum (3)All debian.org packages (1|2|3) '
-	read answer
-fi
-if echo "$answer" | grep -iq "^3"; then
-	# ALL
-	sudo apt-get -y install php7.0-bcmath php7.0-bz2 php7.0-cgi php7.0-cli php7.0-common php7.0-curl php7.0-dba php7.0-dev php7.0-enchant php7.0-gd php7.0-gmp php7.0-imap php7.0-interbase php7.0-intl php7.0-json php7.0-ldap php7.0-mbstring php7.0-mcrypt php7.0-mysql php7.0-odbc php7.0-opcache php7.0-pgsql php7.0-phpdbg php7.0-pspell php7.0-readline php7.0-recode php7.0-snmp php7.0-soap php7.0-sqlite3 php7.0-sybase php7.0-tidy php7.0-xml php7.0-xmlrpc php7.0-xsl php7.0-zip php-redis php-xdebug
-elif echo "$answer" | grep -iq "^2"; then
-	# Min
-	sudo apt-get -y install php7.0-cli php7.0-common php7.0-curl php7.0-gd php7.0-json php7.0-mbstring php7.0-mcrypt php7.0-mysql php7.0-opcache php7.0-readline php7.0-xml php7.0-xmlrpc php7.0-xsl
-else
-	# Recommended
-	sudo apt-get -y install php7.0-cli php7.0-common php7.0-curl php7.0-gd php7.0-json php7.0-mbstring php7.0-mcrypt php7.0-mysql php7.0-opcache php7.0-pspell php7.0-readline php7.0-snmp php7.0-soap php7.0-sqlite3 php7.0-xml php7.0-xmlrpc php7.0-xsl php7.0-zip php-memcached
-
-	# memcache
-	sudo apt-get -y install memcached
-fi
 
 # www extras
 sudo echo "<?php phpinfo();" > /var/www/html/info.php
 
 # utilities
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postfix
-sudo apt-get -y install logwatch python-letsencrypt-apache
-
-# cron
-if [ "$UNATTENDED" = "0" ]; then
-	echo -n "Setup daily email for critical entries via cron.daily? (enter@youremail.com|n) "
-	read answer
-	if echo "$answer" | grep -iq "^n"; then
-		echo ""
-	else	
-		sudo echo "/usr/sbin/logwatch --output mail --mailto $answer --detail high" > /etc/cron.daily/logwatch
-	fi
-fi
+sudo apt-get -y install memcached python-letsencrypt-apache
 
 # status
 echo "Install complete."
@@ -361,31 +299,21 @@ echo "127.0.0.1/info.php"
 echo ""
 echo "● Let's Encrypt"
 echo "letsencrypt --apache -d site.com"
-echo "letsencrypt certonly --standalone --email you@site.com --agree-tos -d site.com -d site2.com"
-if [ "$UNATTENDED" = "1" ]; then
-	echo ""
-	echo "● Skipped"
-	echo "These commands were skipped during unattended installation:"
-	echo "sudo passwd $USER"
-	echo "sudo systemctl restart ssh.service"
-	echo "mysql_secure_installation"
-else
-	if [ "$SSH_REMINDER" = "1" ]; then
-		echo ""
-		echo "● Skipped"
-		echo "These commands were skipped during installation:"
-		echo "sudo systemctl restart ssh.service"		
-	fi
-fi
+echo "letsencrypt certonly --standalone --email you@site.com --agree-tos -d site.com"
 
 # thats it
 echo ""
-echo "ToDo"
-echo "----"
+echo "● ToDo"
 echo "☐ Add SSL certificate to postfix"
 echo "☐ Remove /var/www/html/info.php"
 if [ "$UNATTENDED" = "1" ]; then
+	echo "☐ Change 'PermitRootLogin' to 'no' in /etc/ssh/sshd_config"
 	echo "☐ Update hostname (apache2.service may fail to start without proper hostname)"
+	echo "☐ sudo passwd $USER"
+	echo "☐ sudo systemctl restart ssh.service"
+	echo "☐ mysql_secure_installation"
+elif [ "$SSH_REMINDER" = "1" ]; then
+	echo "☐ sudo systemctl restart ssh.service"
 fi
 echo ""
 
