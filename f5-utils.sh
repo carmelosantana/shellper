@@ -45,7 +45,7 @@ sudo apt-get upgrade -y
 # webmin
 wget https://raw.githubusercontent.com/carmelosantana/shellper/master/install-webmin.sh
 chmod +x install-webmin.sh
-sudo ./install-webmin.sh
+echo y | sudo ./install-webmin.sh
 
 # utilities
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postfix
