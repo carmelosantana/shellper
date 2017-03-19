@@ -70,20 +70,17 @@ Utilities:
   python-letsencrypt-apache"
 
 # continue with this?
-echo ""
-echo -n "Continue? (y|n) "
-read answer
-if echo "$answer" | grep -iq "^n"; then
-	exit 1
-fi
+echo
 
 # unattended
-echo -n "(mostly) Unattended install? (y|n) "
+echo -n "Unattended install? (y|n|q) "
 read answer
 if echo "$answer" | grep -iq "^y"; then
 	UNATTENDED=1
+elif echo "$answer" | grep -iq "^n"; then
+	UNATTENDED=0
 else
-	UNATTENDED=0	
+	exit 1
 fi
 
 # upgrade, update
@@ -119,17 +116,15 @@ else
 		sudo passwd $USER
 	fi
 
-	# safe sudoers edit
-	if [ -e /etc/sudoers.tmp -o "$(pidof visudo)" ]; then 
-		echo "/etc/sudoers busy, try again later"
-	else
-		cp /etc/sudoers /etc/sudoers.bak
-		cp /etc/sudoers /etc/sudoers.tmp
-		chmod 0740 /etc/sudoers.tmp
-		echo "$USER  ALL=(ALL:ALL) ALL" >> /etc/sudoers.tmp
-		chmod 0440 /etc/sudoers.tmp
-		mv /etc/sudoers.tmp /etc/sudoers
-	fi
+	# safe sudoers add
+	sudo adduser $USER adm
+	sudo adduser $USER cdrom
+	sudo adduser $USER sudo
+	sudo adduser $USER dip
+	sudo adduser $USER plugdev
+	sudo adduser $USER lxd
+	sudo adduser $USER lpadmin
+	sudo adduser $USER sambashare
 
 	# restart SSH?
 	if [ "$UNATTENDED" = "0" ]; then
@@ -264,45 +259,45 @@ sudo apt-get -y install memcached python-letsencrypt-apache
 
 # status
 echo "Install complete."
-echo ""
+echo 
 echo "------"
 echo "Status"
 echo "------"
-echo ""
+echo 
 echo "$(systemctl status apache2)"
-echo ""
+echo 
 echo "● mod_security"
 echo "$(apachectl -M | grep --color security)"
-echo ""
+echo 
 echo "$(systemctl status mysql)"
 if [ "$FPM" = "1" ]; then
 	echo ""
 	echo "$(systemctl status php7.0-fpm)"
 fi
-echo ""
+echo 
 if [ "$MEMCACHED" = "1" ]; then
 	echo ""
 	echo "$(systemctl status memcached)"
 fi
-echo ""
+echo 
 echo "$(systemctl status ufw)"
-echo ""
+echo 
 echo "● ufw"
 sudo ufw status verbose
 
 # notes
 echo "● Time: $(date)"
 echo "Run 'dpkg-reconfigure tzdata' if you wish to change it."
-echo ""
+echo 
 echo "● phpinfo()"
 echo "127.0.0.1/info.php"
-echo ""
+echo 
 echo "● Let's Encrypt"
 echo "letsencrypt --apache -d site.com"
 echo "letsencrypt certonly --standalone --email you@site.com --agree-tos -d site.com"
 
 # thats it
-echo ""
+echo 
 echo "● ToDo"
 echo "☐ Add SSL certificate to postfix"
 echo "☐ Remove /var/www/html/info.php"
@@ -315,14 +310,13 @@ if [ "$UNATTENDED" = "1" ]; then
 elif [ "$SSH_REMINDER" = "1" ]; then
 	echo "☐ sudo systemctl restart ssh.service"
 fi
-echo ""
+echo 
 
 # Sources:
 # https://gist.github.com/gpassarelli/52bc73f3fdb7359a43c8
-# https://help.ubuntu.com/community/UFW# https://www.howtoforge.com/tutorial/apache-with-php-fpm-on-ubuntu-16-04/
-# https://packages.debian.org/source/stretch/php7.0
+# https://help.ubuntu.com/community/UFW
+# https://www.howtoforge.com/tutorial/apache-with-php-fpm-on-ubuntu-16-04/
 # https://plusbryan.com/my-first-5-minutes-on-a-server-or-essential-security-for-linux-servers
-# https://stackoverflow.com/questions/36070562/disable-ssh-root-login-by-modifying-etc-ssh-sshd-conf-from-within-a-script#36071618
 # https://ubuntuforums.org/showthread.php?t=1352310&p=8481506#post8481506
 # https://www.digitalocean.com/community/tutorials/how-to-set-up-mod_security-with-apache-on-debian-ubuntu
 # https://www.howtoforge.com/tutorial/apache-with-php-fpm-on-ubuntu-16-04/
