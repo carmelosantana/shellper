@@ -18,11 +18,17 @@ Choose which file to run, for this example we'll use [f5-lamp.sh](https://raw.gi
 ```
 
 ## Scripts
+**f5** First 5 minutes
 * [**f5-lamp.sh**](https://raw.githubusercontent.com/carmelosantana/shellper/master/f5-lamp.sh)
 * [**f5-utils.sh**](https://raw.githubusercontent.com/carmelosantana/shellper/master/f5-utils.sh)
+
+**Install**
 * [**install-geekbench.sh**](https://raw.githubusercontent.com/carmelosantana/shellper/master/install-geekbench.sh)
 * [**install-speedtest.sh**](https://raw.githubusercontent.com/carmelosantana/shellper/master/install-speedtest.sh)
 * [**install-webmin.sh**](https://raw.githubusercontent.com/carmelosantana/shellper/master/install-webmin.sh)
+
+**Update**
+* [**update-gogs.sh**](https://raw.githubusercontent.com/carmelosantana/shellper/master/install-geekbench.sh)
 
 ## License
 [MIT](http://opensource.org/licenses/MIT)

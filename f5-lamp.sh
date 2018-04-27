@@ -84,8 +84,7 @@ else
 fi
 
 # upgrade, update
-sudo apt-get update
-sudo apt-get upgrade -y
+sudo apt-get update && sudo apt-get upgrade -y
 
 # username or skip
 if [ "$UNATTENDED" = "1" ]; then
@@ -227,7 +226,7 @@ fi
 if [ "$UNATTENDED" = "1" ]; then
 	answer=1
 else
-	echo -n "Install (1)php7.1-fpm (2)php7.0-fpm (1|2) "
+	echo -n "Install (1)php7.2-fpm (2)php7.0-fpm (1|2) "
 	read answer
 fi
 if echo "$answer" | grep -iq "2"; then
@@ -235,7 +234,7 @@ if echo "$answer" | grep -iq "2"; then
 	PHP="php7.0"
 else
 	ONDREJ_PHP=1
-	PHP="php7.1"
+	PHP="php7.2"
 	echo | sudo add-apt-repository ppa:ondrej/php
 	sudo apt-get update
 fi
