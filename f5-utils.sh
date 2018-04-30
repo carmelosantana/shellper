@@ -43,7 +43,7 @@ sudo apt-get update
 sudo apt-get upgrade -y
 
 # webmin
-wget https://raw.githubusercontent.com/carmelosantana/shellper/master/install-webmin.sh
+wget https://raw.githubusercontent.com/carmelosantana/shellper/master/sh-installs/install-webmin.sh
 chmod +x install-webmin.sh
 echo y | sudo ./install-webmin.sh
 
