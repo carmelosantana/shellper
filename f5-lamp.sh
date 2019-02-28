@@ -66,8 +66,7 @@ Services:
     fpm
 
 Utilities:
-  postfix
-  python-letsencrypt-apache"
+  postfix"
 
 # continue with this?
 echo
@@ -208,9 +207,9 @@ sudo systemctl restart apache2.service
 
 # mysql
 if [ "$UNATTENDED" = "1" ]; then
-	answer=1
+	answer=0
 else
-	echo -n "Install (1)MariaDB (2)MySQL (1|2) "
+	echo -n "Install (1)MariaDB (2)MySQL (1|2|0) "
 	read answer
 fi
 if echo "$answer" | grep -iq "2"; then
@@ -254,7 +253,7 @@ sudo echo "<?php phpinfo();" > /var/www/html/info.php
 
 # utilities
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y install postfix
-sudo apt-get -y install memcached python-letsencrypt-apache
+sudo apt-get -y install memcached
 
 # status
 echo "Install complete."
