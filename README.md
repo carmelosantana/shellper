@@ -15,7 +15,7 @@
 1. Automated install
 
 ```bash
-curl -sSL https://github.com/carmelosantana/shellper/blob/master/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/carmelosantana/shellper/master/install.sh | bash
 ```
 
 ## Contents
