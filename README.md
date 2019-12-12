@@ -12,10 +12,17 @@
  
 ## Usage
 
-1. Automated install
+1. Install
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/carmelosantana/shellper/master/install.sh | bash
+git clone https://github.com/carmelosantana/shellper.git shellper
+cd "shellper"
+chmod +x shellper.sh
+```
+2. Run
+
+```bash
+(sudo) ./shellper.sh
 ```
 
 ## Contents
