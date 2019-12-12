@@ -69,10 +69,12 @@ Functions:
 
 ## ToDo
 
-- [ ] Installer /usr/bin
+- [ ] Link to `/usr/bin`
 - [ ] Apache Superset installer
 - [ ] WordPress joblets
 - [ ] *Secure* LAMP
+- [ ] Check if root during `setup_sudo_user`
+- [ ] Add options to functions with predefined values (hdd_test, increase_lvm_size)
 
 ## License
 
