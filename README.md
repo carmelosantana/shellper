@@ -1,14 +1,12 @@
 # Shellper
 
-> Simple tools to automate server provisioning and maintenance.
+Simple tools to automate server provisioning and maintenance.
 
-<p align="center">
-<img src="https://github-shellhelp.s3.amazonaws.com/f5-lamp-640.gif" />
-</p>
+[![install_lamp](https://raw.githubusercontent.com/carmelosantana/shellper-assets/master/install-lamp-v0.12.gif)](https://www.youtube.com/watch?v=RiqMoP9DCSU)
 
 ## Compatible with
 
-`Ubuntu 18.04 LTS`
+`Ubuntu 18.04 LTS` `Ubuntu 19.10`
  
 ## Usage
 
@@ -65,6 +63,7 @@ Functions:
   - install_syncthing
   - install_terminal_utils
   - install_webmin
+  - install_wp_cli
   - set_debian_frontend_noninteractive
   - setup_apache
   - setup_mysql
