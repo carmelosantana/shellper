@@ -1,5 +1,5 @@
 #!/bin/bash
-SHELLPER_VERSION="0.12"
+SHELLPER_VERSION="0.13"
 export SHELLPER_VERSION
 
 function _shellper_help {
@@ -8,6 +8,9 @@ function _shellper_help {
 | Shellper - shellper.org|
 +------------------------+ v$SHELLPER_VERSION 
 ./shellper.sh [COMMAND]
+
+Recently added:
+  - install_wp_cli
 
 Joblets:
   - install_lamp
@@ -439,6 +442,14 @@ function install_webmin {
     apt_update_upgrade
     sudo apt install -y webmin
 	sudo ufw allow 10000	
+}
+
+function install_wp_cli {
+	curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+	# TODO: Add check
+	php wp-cli.phar --info
+	chmod +x wp-cli.phar
+	sudo mv wp-cli.phar /usr/local/bin/wp
 }
 
 function set_debian_frontend_noninteractive {
