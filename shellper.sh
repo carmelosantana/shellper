@@ -1,5 +1,6 @@
 #!/bin/bash
-SHELLPER_VERSION="0.13"
+# cd shellper && chmod +x shellper.sh && ./shellper.sh
+SHELLPER_VERSION="0.14"
 export SHELLPER_VERSION
 
 function _shellper_help {
@@ -7,36 +8,37 @@ function _shellper_help {
 +------------------------+
 | Shellper - shellper.org|
 +------------------------+ v$SHELLPER_VERSION 
-./shellper.sh [COMMAND]
+[Joblets]
+install_lamp
 
-Recently added:
-  - install_wp_cli
-
-Joblets:
-  - install_lamp
-
-Functions:
-  - apache_restart			- apt_update_upgrade
-  - ask_mariadb_mysql			- ask_new_sudo_user
-  - ask_security 			- crontab_backup
-  - current_ssh_users			- echo_install_complete
-  - file_change_append 			- get_parent_dir
-  - get_all_users			- get_lamp_status
-  - hdd_test 				- increase_lvm_size
-  - install_apache_mod_security		- install_chrome
-  - install_fish 			- install_geekbench
-  - install_lamp 			- install_mariadb
-  - install_maxmind			- install_memcached
-  - install_mycroft			- install_mysql
-  - install_ondrej_apache		- install_ondrej_php
-  - install_php_test 			- install_postfix
-  - install_security 			- install_speedtest
-  - install_syncthing			- install_terminal_utils
-  - install_webmin 			- set_debian_frontend_noninteractive
-  - setup_apache 			- setup_mysql
-  - setup_security 			- setup_sudo_user
-  - setup_permit_root_login		- setup_unattended_upgrades
-  "	
+[Functions]
+apache_restart                      apt_update_upgrade
+ask_mariadb_mysql                   ask_reboot
+crontab_backup                      current_ssh_users
+debian_frontend_noninteractive      echo_install_complete
+file_change_append                  gen_password
+get_parent_dir                      get_all_users
+get_random_lwr_string               get_lamp_status
+get_php_version                     hdd_test
+increase_lvm_size                   install_apache_mod_security
+install_certbot                     install_fish
+install_geekbench                   install_imagemagick_ffmpeg
+install_mariadb                     install_maxmind
+install_memcached                   install_mod_pagespeed
+install_mycroft                     install_mysql
+install_ondrej_apache               install_ondrej_php
+install_php_test                    install_postfix
+install_security                    install_speedtest
+install_syncthing                   install_terminal_utils
+install_webmin                      install_wp_cli
+restart_lamp                        setup_fqdn
+setup_hostname                      setup_script_log
+setup_apache                        setup_mysql
+setup_security                      setup_security_sshd
+setup_sudo_user                     setup_syncthing
+setup_syncthing_screen              setup_unattended_upgrades
+wp_cron_to_crontab                  
+"	
 }
 
 function shellper {
@@ -57,8 +59,8 @@ function apache_restart {
 }
 
 function apt_update_upgrade {	
-	sudo apt update
-	sudo apt upgrade -yq
+	sudo apt-get update
+	sudo apt-get upgrade -yq
 }
 
 function ask_mariadb_mysql {
@@ -96,74 +98,10 @@ function ask_mariadb_mysql {
 	export MYSQL_SECURE
 }
 
-function ask_new_sudo_user {
-	if [ ! -n "$1" ];
-		then UNATTENDED="0"
-		else UNATTENDED="$1"
-	fi
-	PERMITROOT_N0=0
-	SSH_REMINDER=0
-
-	if [ "$UNATTENDED" = "1" ]; then
-		answer="y"
-	else
-		echo -n "Create new sudo user? (y)Yes as deploy (n)Skip: "
-		read answer
-	fi
-
-	if echo "$answer" | grep -iq "^n"; then
-		echo -n "Skipping sudo user creation."
-	else	
-		if echo "$answer" | grep -iq "^y";
-			then USER="deploy"
-			else USER=$answer
-		fi
-		setup_sudo_user "$USER"
-
-		if [ "$UNATTENDED" = "0" ]; then
-			echo -n "Change PermitRootLogin to 'no'? (y)Yes (n)No: "
-			read answer
-			if echo "$answer" | grep -iq "^y"; then
-				setup_permit_root_login
-			fi
-
-			echo -n "Restart SSH Service? Command may disrupt existing ssh connections. (y)Yes (n)No: "
-			read answer
-			if echo "$answer" | grep -iq "^y"; then
-		        sudo systemctl restart ssh.service
-			fi
-		else 
-			SSH_REMINDER=1
-		fi
-
-		if [ "$UNATTENDED" = "1" ]; then
-			answer="n"
-		else
-			echo -n "Continue as $USER? (Require's restarting the script.) (y)Yes (n)No: "
-			read answer
-		fi
-		if echo "$answer" | grep -iq "^y"; then
-			su "$USER"
-		fi	
-	fi
-	export PERMITROOT_NO
-	export SSH_REMINDER
-	export USER
-}
-
-function ask_security {
-	if [ "$UNATTENDED" = "1" ]; then
-		answer="n"
-	else
-		echo -n "Limit SSH access to IP/subnet or allow all? (y)Limit to IP address (n)Allow All: "
-		read answer	
-	fi
-	if echo "$answer" | grep -iq "^n"; then
-		sudo ufw allow 22
-	else
-		sudo ufw allow from "$answer"
-	fi
-	setup_security
+function ask_reboot {
+	echo -n "Reboot in 30 seconds ... CTRL C to exit script and cancel reboot."
+	sleep 30 
+	sudo reboot
 }
 
 function crontab_backup {
@@ -172,6 +110,11 @@ function crontab_backup {
 
 function current_ssh_users {
 	netstat -tnpa | grep 'ESTABLISHED.*sshd'
+}
+
+function debian_frontend_noninteractive {
+	DEBIAN_FRONTEND=noninteractive
+	export DEBIAN_FRONTEND
 }
 
 function echo_install_complete {
@@ -215,6 +158,15 @@ function file_change_append {
 	sync	
 }
 
+function gen_password {
+	if [ ! -n "$1" ];
+		then LEN="20"
+		else LEN="$1"
+	fi
+	PASS="$(head -c 32 /dev/urandom | base64 | fold -w $LEN | head -n 1)"
+	echo "$(sed -e 's/[[:space:]]*$//' <<<${PASS})"
+}
+
 function get_parent_dir {
 	echo "$(dirname "$(pwd)")"
 }
@@ -223,11 +175,16 @@ function get_all_users {
 	cut -d: -f1 /etc/passwd
 }
 
-function get_lamp_status {
+function get_random_lwr_string {
 	if [ ! -n "$1" ];
-		then PHP="7.4"
-		else PHP="$1"
+		then LEN="3"
+		else LEN="$1"
 	fi
+	echo "$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w $LEN | head -n 1)"	
+}
+
+function get_lamp_status {
+	PHP=get_php_version
 	echo "$(systemctl status apache2)"
 	echo "$(apachectl -M | grep --color security)"
 	echo "$(systemctl status $PHP-fpm)"
@@ -236,33 +193,44 @@ function get_lamp_status {
 	echo "$(sudo ufw status verbose)"	
 }
 
+function get_php_version {
+	echo "$(systemctl status | grep -io 'php[7-9].[0-9]')"
+}
+
 function hdd_test {
-	#TODO: HDD select
-	sudo hdparm -Tt /dev/sda
+	if [ ! -n "$1" ];
+		then HDD="/dev/sda"
+		else HDD="$1"
+	fi
+	sudo hdparm -Tt "$HDD"
 }
 
 function increase_lvm_size {
-	#TODO: volume select
+	if [ ! -n "$1" ];
+		then LVM="/dev/ubuntu-vg/ubuntu-lv"
+		else LVM="$1"
+	fi
 	sudo lvdisplay -m
-	sudo lvresize -l+100%FREE /dev/ubuntu-vg/ubuntu-lv
-	sudo resize2fs /dev/ubuntu-vg/ubuntu-lv	
+	sudo lvresize -l+100%FREE "$LVM"
+	sudo resize2fs "$LVM"
 }
 
 function install_apache_mod_security {
-    sudo apt install libapache2-mod-security2 -y
+    sudo apt-get install libapache2-mod-security2 -y
     sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
     file_change_append "/etc/modsecurity/modsecurity.conf" "SecRuleEngine" "On" 0
 }
 
-function install_chrome {
-	wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add - 
-	sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+function install_certbot {
+	sudo apt-get -y install software-properties-common
+	sudo add-apt-repository -y universe
+	sudo add-apt-repository -y ppa:certbot/certbot
 	apt_update_upgrade
-	sudo apt install google-chrome-stable -y
+	sudo apt-get -y install certbot python-certbot-apache
 }
 
 function install_fish {
-    sudo apt install fish -y
+    sudo apt-get install fish -y
     chsh -s `which fish`
 }
 
@@ -273,35 +241,19 @@ function install_geekbench {
 	./geekbench5
 }
 
+function install_imagemagick_ffmpeg {
+	sudo apt-get -y install imagemagick ffmpeg	
+}
+
 function install_lamp {
 	if [ ! -n "$1" ];
 		then UNATTENDED="0"
 		else UNATTENDED="$1"
 	fi
 	if [ ! -n "$2" ];
-		then SKIP_SUDO_CREATE="0"
-		else SKIP_SUDO_CREATE="$2"
-	fi	
-
-	echo "
-+---------------------+
-|First 5 Minutes: LAMP|
-+---------------------+
-System:
-  Distro update + upgrade
-  Create sudo user
-
-Security:
-  fail2ban
-  ufw
-  unattended-upgrades
-
-Services:
-  apache2
-  php fpm
-  MariaDB or MySQL
-  Memcached
-  postfix"
+		then SUDO_USERNAME="deploy"
+		else SUDO_USERNAME="$2"
+	fi
 
 	if [ "$UNATTENDED" = "0" ]; then
 		echo -n "Unattended install? (y)Yes (n)No (q)Quit: "
@@ -311,7 +263,7 @@ Services:
 	fi
 	if echo "$answer" | grep -iq "^y"; then
 		UNATTENDED=1
-		set_debian_frontend_noninteractive
+		debian_frontend_noninteractive
 
 	elif echo "$answer" | grep -iq "^n"; then
 		UNATTENDED=0
@@ -319,90 +271,105 @@ Services:
 		exit 1	
 	fi
 
+	setup_sudo_user "$SUDO_USERNAME"
+
 	apt_update_upgrade
-	if [ "$SKIP_SUDO_CREATE" = "0" ]; then
-		ask_new_sudo_user "$UNATTENDED"
-	fi
+	setup_unattended_upgrades
 	install_security
 	install_ondrej_apache
 	install_ondrej_php
 	install_php_test
 	ask_mariadb_mysql "$UNATTENDED"
-	install_postfix
+	postfix_install_loopback_only
 	install_memcached
-	setup_apache
-	ask_security "$UNATTENDED"
 	get_lamp_status
 
-	echo 
-	echo "+ ToDo"
+	echo -n "+ ToDo"
 	echo "  - Update hostname"
-	if [ "$UNATTENDED" = "1" ]; then
-		echo "  - sudo passwd $USER"
-	fi	
+	echo "  - General security"
 	if [ "$MYSQL_SECURE" = "0" ]; then
 		echo "  - mysql_secure_installation"
 	fi
-	if [ "$PERMITROOT_NO" = "0" ]; then
-		echo "  - Change 'PermitRootLogin' to 'no' in /etc/ssh/sshd_config followed by 'sudo systemctl restart ssh.service'"
-	fi			
-	if [ "$SSH_REMINDER" = "1" ]; then
-		echo "  - systemctl restart ssh.service"
-	fi
+	echo "  - Change 'PermitRootLogin' to 'no' in /etc/ssh/sshd_config followed by 'sudo systemctl restart ssh.service'"
+	echo "  -- systemctl restart ssh.service"
+	echo "  - sudo passwd $SUDO_PASSWORD"
 	echo_install_complete
 }
 
 function install_mariadb {
-	sudo apt -y install mariadb-server mariadb-client
+	sudo apt-get -y nstall mariadb-server mariadb-client
 }
 
 function install_maxmind {
 	echo | sudo add-apt-repository ppa:maxmind/ppa
 	apt_update_upgrade
-	sudo apt-get install geoipupdate libmaxminddb0 libmaxminddb-dev mmdb-bin -y	
+	sudo apt-get -y install geoipupdate libmaxminddb0 libmaxminddb-dev mmdb-bin
 }
 
 function install_memcached {
-	sudo apt -y install memcached
+	sudo apt-get -y install memcached
+}
+
+function install_mod_pagespeed {
+	if [ ! -n "$1" ];
+		then BRANCH="stable"
+		else BRANCH="$1"
+	fi
+	
+    case "$BRANCH" in
+    "beta")
+        wget https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-beta_current_amd64.deb
+        ;;
+    *)
+        wget https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_amd64.deb
+        ;;
+    esac
+	
+	sudo dpkg -i mod-pagespeed-*.deb
+	sudo apt-get -f -y install
 }
 
 function install_mycroft {
 	#TODO: Add avx check
     grep avx /proc/cpuinfo
 
-    cd ~/
+	if [ ! -n "$1" ];
+		then PATH="~/"
+		else PATH="$1"
+	fi
+    cd "$PATH"
     git clone https://github.com/MycroftAI/mycroft-core.git
     cd mycroft-core
     bash dev_setup.sh    
 }
 
 function install_mysql {
-	sudo apt -y install mysql-server mysql-client
+	sudo apt-get -y install mysql-server mysql-client
 }
 
 function install_ondrej_apache {
     echo | sudo add-apt-repository ppa:ondrej/apache2
 	apt_update_upgrade
-    sudo apt install apache2 apache2-utils -y
+    sudo apt-get install apache2 apache2-utils -y
 }
 
 function install_ondrej_php {
+	# TODO: Add default to latest
 	if [ ! -n "$1" ];
 		then PHP="php7.4"
 		else PHP="$1"
 	fi
     export PHP
     echo | sudo add-apt-repository ppa:ondrej/php
-    sudo apt -y install $PHP libapache2-mod-$PHP $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-json $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xmlrpc $PHP-xsl $PHP-zip php-memcached
-    sudo ln -rs "/etc/apache2/conf-available/$PHP-fpm.conf" "/etc/apache2/conf-enabled/$PHP-fpm.conf"
-	a2dismod $PHP
+    sudo apt-get -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-json $PHP-int $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xmlrpc $PHP-xsl $PHP-zip php-memcached
+    a2enmod proxy_fcgi setenvif
+	a2enconf "$PHP"-fpm
+	a2dismod "$PHP"
 	apache_restart
 }
 
 function install_php_test {
 	sudo echo "<?php phpinfo();" > "/var/www/html/info.php"
-	sudo chown -Rv www-data:www-data "/var/www/"
-	sudo chmod -Rv 2755 "/var/www/"
 }
 
 function install_postfix {
@@ -410,13 +377,13 @@ function install_postfix {
 }
 
 function install_security {
-	sudo apt -y install fail2ban ufw
+	sudo apt-get -y install fail2ban ufw
 }
 
 function install_speedtest {
 	# Source:
     # https://fossbytes.com/test-internet-speed-linux-command-line/
-    sudo apt install -y python-pip
+    sudo apt-get install -y python-pip
     pip install speedtest-cli
     speedtest-cli    
 }
@@ -425,14 +392,14 @@ function install_syncthing {
     curl -s https://syncthing.net/release-key.txt | sudo apt-key add -
     echo "deb https://apt.syncthing.net/ syncthing stable" | sudo tee /etc/apt/sources.list.d/syncthing.list
     apt_update_upgrade
-    sudo apt install -y syncthing
+    sudo apt-get install -y syncthing
     sudo ufw allow syncthing
     sudo ufw allow syncthing-gui    
 }
 
 function install_terminal_utils {
     apt_update_upgrade
-    sudo apt -y install aptitude git glances htop screen
+    sudo apt-get install -y aptitude expect git glances htop screen
 }
 
 function install_webmin {
@@ -440,7 +407,8 @@ function install_webmin {
     echo "deb http://download.webmin.com/download/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
     echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
     apt_update_upgrade
-    sudo apt install -y webmin
+    sudo apt-get install -y webmin
+	# TODO: Add allow from
 	sudo ufw allow 10000	
 }
 
@@ -452,19 +420,48 @@ function install_wp_cli {
 	sudo mv wp-cli.phar /usr/local/bin/wp
 }
 
-function set_debian_frontend_noninteractive {
-	DEBIAN_FRONTEND=noninteractive
-	export DEBIAN_FRONTEND
+function restart_lamp {
+	systemctl restart apache2
+	PHP="$(get_php_version)"
+	systemctl restart "$PHP"
+	systemctl restart memcached
+	systemctl restart mysql
+}
+
+function setup_fqdn {
+	echo $(system_primary_ip) "$FQDN $HOSTNAME" >> /etc/hosts
+} 
+
+function setup_hostname {
+	hostnamectl set-hostname $HOSTNAME
+	if [ -n "$2" ]; then
+		setup_fqdn $FQDN $HOSTNAME
+	fi		
+}
+
+function setup_script_log {
+	if [ ! -n "$1" ];
+		then LOG="shellper-$(date +%Y%m%d-%H%M%S)"
+		else LOG="$1"
+	fi
+	exec > >(tee -i "/var/log/$LOG.log")
 }
 
 function setup_apache {
+	if [ ! -n "$1" ];
+		then APACHE_MEM=20
+		else APACHE_MEM="$1"
+	fi	
     sudo a2enmod actions expires proxy_fcgi proxy_http rewrite ssl vhost_alias http2 proxy_http2 setenvif
 	sudo a2enconf php7.4-fpm
-    apache_tune
+    apache_tune "$APACHE_MEM"
 	apache_restart
 
-	sudo ufw allow 80
-	sudo ufw allow 443
+	sudo chown -Rv www-data:www-data "/var/www/"
+	sudo chmod -Rv 2755 "/var/www/"
+
+	sudo ufw allow http
+	sudo ufw allow https
 }
 
 function setup_mysql {
@@ -473,15 +470,35 @@ function setup_mysql {
 }
 
 function setup_security {
-	echo y | sudo ufw enable
 	setup_unattended_upgrades
+	ufw default allow outgoing
+	ufw default deny incoming
+	if [ -n "$1" ]; then 
+		ufw allow from "$1"
+	fi
+	echo y | ufw enable
+	systemctl enable ufw
+	fail2ban_install
+}
+
+function setup_security_sshd {	
+	SSHD_CONFIG="/etc/ssh/sshd_config"
+	sed -i "s/#AddressFamily any/AddressFamily inet/g" "$SSHD_CONFIG"
+	sed -i "s/PermitRootLogin yes/PermitRootLogin no/g" "$SSHD_CONFIG"
+	sed -i "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/g" "$SSHD_CONFIG"
+	sed -i "s/#PasswordAuthentication yes/PasswordAuthentication no/g" "$SSHD_CONFIG"
+	systemctl restart sshd
 }
 
 function setup_sudo_user {
 	if [ ! -n "$1" ];
 		then USER="deploy"
 		else USER="$1"
-	fi	
+	fi
+	if [ ! -n "$2" ];
+		then PASS="0"
+		else PASS="$2"
+	fi		
 	
 	sudo useradd $USER
 	sudo mkdir /home/$USER
@@ -492,27 +509,39 @@ function setup_sudo_user {
 
 	# finish setting up user
 	sudo chown $USER:$USER /home/$USER -R
-	if [ "$UNATTENDED" = "0" ]; then
-		sudo passwd $USER
+	if [ "$PASS" != "0" ]; then
+		echo "$PASS" | passwd "$USER" --stdin
 	fi
 
 	# safe sudoers add
-	sudo adduser $USER adm
-	sudo adduser $USER cdrom
 	sudo adduser $USER sudo
-	sudo adduser $USER dip
-	sudo adduser $USER plugdev
-	sudo adduser $USER lxd
-	sudo adduser $USER lpadmin
-	sudo adduser $USER sambashare
 }
 
-function setup_permit_root_login {
+function setup_syncthing {
 	if [ ! -n "$1" ];
-		then PERMITROOT_NO="no"
-		else PERMITROOT_NO="$1"
+		then OWNER="deploy"
+		else OWNER="$1"
 	fi
-	file_change_append "/etc/ssh/sshd_config" "PermitRootLogin" "$PERMITROOT_NO" 1
+	if [ ! -n "$2" ];
+		then RUN_AS="$OWNER"
+		else RUN_AS="$2"
+	fi
+	
+	runuser -l "$OWNER" -c setup_syncthing_screen
+	sleep 30
+	
+	sudo kill -30 $(pidof syncthing)
+
+	if [ "$OWNER" != "$RUN_AS" ]; then
+		sudo adduser $RUN_AS $OWNER
+	fi
+
+	sudo systemctl enable "syncthing@${RUN_AS}.service"
+	sudo systemctl start "syncthing@${RUN_AS}.service"	
+}
+
+function setup_syncthing_screen {
+	screen -dmS syncthing-init syncthing
 }
 
 function setup_unattended_upgrades {
@@ -521,16 +550,19 @@ function setup_unattended_upgrades {
 	file_change_append "/etc/apt/apt.conf.d/10periodic" "APT::Periodic::AutocleanInterval" '"7";'
 }
 
-function _source_files {
-	LINODE_1="$(pwd)/linode/stackscripts/1.sh"
-	LINODE_401712="$(pwd)/linode/stackscripts/401712.sh"
+function wp_cron_to_crontab {
+	if [ -n "$1" ]; then
+        echo "0 1 * * * '/usr/local/bin/wp core update --allow-root --path=$1' > /dev/null 2>&1" >> wpcron
+        crontab wpcron
+        rm wpcron
+	fi
+}
 
-	for FILE in LINODE_1 LINODE_401712
-	do
-		if [ -f "$FILE" ]
-			then source "$FILE"
-		fi
-	done	
+function _source_files {
+	# https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself?answertab=votes#tab-top
+	DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+	source "$DIR/linode/stackscripts/1.sh"
+	source "$DIR/linode/stackscripts/401712.sh"	
 }
 
 _source_files
