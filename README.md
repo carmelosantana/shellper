@@ -63,6 +63,7 @@ Functions
 | install_mod_pagespeed ||
 | install_mycroft ||
 | install_mysql ||
+| install_mysql_setup ||
 | install_ondrej_apache ||
 | install_ondrej_php ||
 | install_php_test ||
@@ -84,7 +85,6 @@ Functions
 | setup_security_sshd ||
 | setup_sudo_user ||
 | setup_syncthing ||
-| setup_syncthing_screen ||
 | setup_unattended_upgrades ||
 | wp_cron_to_crontab ||
 

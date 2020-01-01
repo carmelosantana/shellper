@@ -1,6 +1,6 @@
 #!/bin/bash
 # cd shellper && chmod +x shellper.sh && ./shellper.sh
-SHELLPER_VERSION="0.14"
+SHELLPER_VERSION="0.15"
 export SHELLPER_VERSION
 
 function _shellper_help {
@@ -12,32 +12,32 @@ function _shellper_help {
 install_lamp
 
 [Functions]
-apache_restart                      apt_update_upgrade
-ask_mariadb_mysql                   ask_reboot
-crontab_backup                      current_ssh_users
-debian_frontend_noninteractive      echo_install_complete
-file_change_append                  gen_password
-get_parent_dir                      get_all_users
-get_random_lwr_string               get_lamp_status
-get_php_version                     hdd_test
-increase_lvm_size                   install_apache_mod_security
-install_certbot                     install_fish
-install_geekbench                   install_imagemagick_ffmpeg
-install_mariadb                     install_maxmind
-install_memcached                   install_mod_pagespeed
-install_mycroft                     install_mysql
-install_ondrej_apache               install_ondrej_php
-install_php_test                    install_postfix
-install_security                    install_speedtest
-install_syncthing                   install_terminal_utils
-install_webmin                      install_wp_cli
-restart_lamp                        setup_fqdn
-setup_hostname                      setup_script_log
-setup_apache                        setup_mysql
-setup_security                      setup_security_sshd
-setup_sudo_user                     setup_syncthing
-setup_syncthing_screen              setup_unattended_upgrades
-wp_cron_to_crontab                  
+apache_restart                  apt_update_upgrade
+ask_mariadb_mysql               ask_reboot
+crontab_backup                  current_ssh_users
+debian_frontend_noninteractive  echo_install_complete
+file_change_append              gen_password
+get_parent_dir                  get_all_users
+get_random_lwr_string           get_lamp_status
+get_php_version                 hdd_test
+increase_lvm_size               install_apache_mod_security
+install_certbot                 install_fish
+install_geekbench               install_imagemagick_ffmpeg
+install_mariadb                 install_maxmind
+install_memcached               install_mod_pagespeed
+install_mycroft                 install_mysql
+install_mysql_setup             install_ondrej_apache
+install_ondrej_php              install_php_test
+install_postfix                 install_security
+install_speedtest               install_syncthing
+install_terminal_utils          install_webmin
+install_wp_cli                  restart_lamp
+setup_fqdn                      setup_hostname
+setup_script_log                setup_apache
+setup_mysql                     setup_security
+setup_security_sshd             setup_sudo_user
+setup_syncthing                 setup_unattended_upgrades
+wp_cron_to_crontab               
 "	
 }
 
@@ -49,6 +49,7 @@ function shellper {
 		exit 0
 	elif [ -n "$answer" ]; then	
 	    ($answer)
+		shellper
 	fi
 	echo -n
 	exit 0
@@ -85,7 +86,7 @@ function ask_mariadb_mysql {
 	else
 		MYSQL=0
 	fi
-
+	
 	# this will produce error when MySQL installed is skipped
 	if [ "$UNATTENDED" = "0" ] && [ "$MYSQL" = "1" ]; then
 		setup_mysql
@@ -123,7 +124,6 @@ function echo_install_complete {
 	echo "|Install complete|"
 	echo "+----------------+"
 	echo
-	exit 0	
 }
 
 function file_change_append {
@@ -297,7 +297,9 @@ function install_lamp {
 }
 
 function install_mariadb {
-	sudo apt-get -y nstall mariadb-server mariadb-client
+	sudo apt-get -y install mariadb-server mariadb-client
+	echo "Sleeping while MySQL starts up for the first time..."
+	sleep 5	
 }
 
 function install_maxmind {
@@ -345,6 +347,17 @@ function install_mycroft {
 
 function install_mysql {
 	sudo apt-get -y install mysql-server mysql-client
+	echo "Sleeping while MySQL starts up for the first time..."
+	sleep 5	
+}
+
+function install_mysql_setup {
+	if [ ! -n "$1" ]; then
+		echo "mysql_install() requires the root pass as its first argument"
+		return 1;
+	fi
+	echo "mysql-server mysql-server/root_password password $1" | debconf-set-selections
+	echo "mysql-server mysql-server/root_password_again password $1" | debconf-set-selections	
 }
 
 function install_ondrej_apache {
@@ -393,8 +406,6 @@ function install_syncthing {
     echo "deb https://apt.syncthing.net/ syncthing stable" | sudo tee /etc/apt/sources.list.d/syncthing.list
     apt_update_upgrade
     sudo apt-get install -y syncthing
-    sudo ufw allow syncthing
-    sudo ufw allow syncthing-gui    
 }
 
 function install_terminal_utils {
@@ -408,8 +419,9 @@ function install_webmin {
     echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
     apt_update_upgrade
     sudo apt-get install -y webmin
-	# TODO: Add allow from
-	sudo ufw allow 10000	
+	if [ "$1" = "1" ]; then
+		sudo ufw allow webmin
+	fi
 }
 
 function install_wp_cli {
@@ -429,13 +441,28 @@ function restart_lamp {
 }
 
 function setup_fqdn {
-	echo $(system_primary_ip) "$FQDN $HOSTNAME" >> /etc/hosts
+	if [ ! -n "$1" ]; then
+		echo "setup_fqdn() requires the HOSTNAME as its first argument"
+		return 1;		
+	fi
+	if [ ! -n "$2" ]; then
+		echo "setup_fqdn() requires the FQDN as its first argument"
+		return 1;		
+	fi			
+	echo "$(system_primary_ip) $FQDN $HOSTNAME" >> /etc/hosts
 } 
 
 function setup_hostname {
-	hostnamectl set-hostname $HOSTNAME
+	if [ ! -n "$1" ]; then
+		echo "setup_fqdn() requires the HOSTNAME as its first argument"
+		return 1;		
+	fi
+	if [ ! -n "$2" ]; then
+		echo "Optional: setup_fqdn() accepts the FQDN as its second argument"
+	fi	
+	hostnamectl set-hostname $1
 	if [ -n "$2" ]; then
-		setup_fqdn $FQDN $HOSTNAME
+		setup_fqdn $2 $1
 	fi		
 }
 
@@ -460,8 +487,8 @@ function setup_apache {
 	sudo chown -Rv www-data:www-data "/var/www/"
 	sudo chmod -Rv 2755 "/var/www/"
 
-	sudo ufw allow http
-	sudo ufw allow https
+	sudo ufw allow 80
+	sudo ufw allow 443
 }
 
 function setup_mysql {
@@ -475,7 +502,7 @@ function setup_security {
 	ufw default deny incoming
 	if [ -n "$1" ]; then 
 		ufw allow from "$1"
-	fi
+	fi	
 	echo y | ufw enable
 	systemctl enable ufw
 	fail2ban_install
@@ -486,7 +513,6 @@ function setup_security_sshd {
 	sed -i "s/#AddressFamily any/AddressFamily inet/g" "$SSHD_CONFIG"
 	sed -i "s/PermitRootLogin yes/PermitRootLogin no/g" "$SSHD_CONFIG"
 	sed -i "s/#PubkeyAuthentication yes/PubkeyAuthentication yes/g" "$SSHD_CONFIG"
-	sed -i "s/#PasswordAuthentication yes/PasswordAuthentication no/g" "$SSHD_CONFIG"
 	systemctl restart sshd
 }
 
@@ -505,12 +531,11 @@ function setup_sudo_user {
 	sudo mkdir /home/$USER/.ssh
 	sudo chmod 700 /home/$USER/.ssh
 	sudo chsh -s /bin/bash $USER
-	sudo cp .bashrc .profile /home/$USER
-
-	# finish setting up user
 	sudo chown $USER:$USER /home/$USER -R
+
 	if [ "$PASS" != "0" ]; then
-		echo "$PASS" | passwd "$USER" --stdin
+		# https://stackoverflow.com/questions/714915/using-the-passwd-command-from-within-a-shell-script?answertab=votes#tab-top
+		echo "$USER:$PASS" | chpasswd
 	fi
 
 	# safe sudoers add
@@ -522,32 +547,33 @@ function setup_syncthing {
 		then OWNER="deploy"
 		else OWNER="$1"
 	fi
-	if [ ! -n "$2" ];
-		then RUN_AS="$OWNER"
-		else RUN_AS="$2"
-	fi
-	
-	runuser -l "$OWNER" -c setup_syncthing_screen
+
+	sudo systemctl start "syncthing@${OWNER}.service"	
 	sleep 30
-	
-	sudo kill -30 $(pidof syncthing)
+	sudo systemctl stop "syncthing@${OWNER}.service"	
 
-	if [ "$OWNER" != "$RUN_AS" ]; then
-		sudo adduser $RUN_AS $OWNER
+	if [ "$2" = "1" ]; then
+		SYNCTHING_PATH=$(eval echo "~$OWNER")"/.config/syncthing/config.xml"
+		if [ -f "$SYNCTHING_PATH" ]; then
+			OWNER="www-data"; sed -i "s/127.0.0.1:8384/0.0.0.0:8384/g" "$SYNCTHING_PATH"
+		else
+			echo "setup_syncthing() can't find Syncthing config"
+		fi
+	fi	
+	if [ "$3" = "1" ]; then
+		sudo ufw allow syncthing
+		sudo ufw allow syncthing-gui
 	fi
 
-	sudo systemctl enable "syncthing@${RUN_AS}.service"
-	sudo systemctl start "syncthing@${RUN_AS}.service"	
-}
-
-function setup_syncthing_screen {
-	screen -dmS syncthing-init syncthing
+	sudo systemctl enable "syncthing@${OWNER}.service"
+	sudo systemctl start "syncthing@${OWNER}.service"	
 }
 
 function setup_unattended_upgrades {
-	file_change_append "/etc/apt/apt.conf.d/10periodic" "APT::Periodic::Unattended-Upgrade" '"1";' 1
-	file_change_append "/etc/apt/apt.conf.d/10periodic" "APT::Periodic::Download-Upgradeable-Packages" '"1";'
-	file_change_append "/etc/apt/apt.conf.d/10periodic" "APT::Periodic::AutocleanInterval" '"7";'
+	APT_CONF="/etc/apt/apt.conf.d/10periodic"
+	file_change_append "$APT_CONF" "APT::Periodic::Unattended-Upgrade" '"1";' 1
+	file_change_append "$APT_CONF" "APT::Periodic::Download-Upgradeable-Packages" '"1";'
+	file_change_append "$APT_CONF" "APT::Periodic::AutocleanInterval" '"7";'
 }
 
 function wp_cron_to_crontab {
