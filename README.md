@@ -45,11 +45,12 @@ Functions
 | echo_install_complete ||
 | file_change_append ||
 | gen_password ||
-| get_parent_dir ||
 | get_all_users ||
-| get_random_lwr_string ||
 | get_lamp_status ||
+| get_parent_dir ||
 | get_php_version ||
+| get_public_ip ||
+| get_random_lwr_string ||
 | hdd_test ||
 | increase_lvm_size ||
 | install_apache_mod_security ||

@@ -1,6 +1,6 @@
 #!/bin/bash
 # cd shellper && chmod +x shellper.sh && ./shellper.sh
-SHELLPER_VERSION="0.15"
+SHELLPER_VERSION="0.16"
 export SHELLPER_VERSION
 
 function _shellper_help {
@@ -12,32 +12,32 @@ function _shellper_help {
 install_lamp
 
 [Functions]
-apache_restart                  apt_update_upgrade
-ask_mariadb_mysql               ask_reboot
-crontab_backup                  current_ssh_users
-debian_frontend_noninteractive  echo_install_complete
-file_change_append              gen_password
-get_parent_dir                  get_all_users
-get_random_lwr_string           get_lamp_status
-get_php_version                 hdd_test
-increase_lvm_size               install_apache_mod_security
-install_certbot                 install_fish
-install_geekbench               install_imagemagick_ffmpeg
-install_mariadb                 install_maxmind
-install_memcached               install_mod_pagespeed
-install_mycroft                 install_mysql
-install_mysql_setup             install_ondrej_apache
-install_ondrej_php              install_php_test
-install_postfix                 install_security
-install_speedtest               install_syncthing
-install_terminal_utils          install_webmin
-install_wp_cli                  restart_lamp
-setup_fqdn                      setup_hostname
-setup_script_log                setup_apache
-setup_mysql                     setup_security
-setup_security_sshd             setup_sudo_user
-setup_syncthing                 setup_unattended_upgrades
-wp_cron_to_crontab               
+apache_restart                      apt_update_upgrade
+ask_mariadb_mysql                   ask_reboot
+crontab_backup                      current_ssh_users
+debian_frontend_noninteractive      echo_install_complete
+file_change_append                  gen_password
+get_parent_dir                      get_all_users
+get_random_lwr_string               get_lamp_status
+get_php_version                     get_public_ip
+hdd_test                            increase_lvm_size
+install_apache_mod_security         install_certbot
+install_fish                        install_geekbench
+install_imagemagick_ffmpeg          install_mariadb
+install_maxmind                     install_memcached
+install_mod_pagespeed               install_mycroft
+install_mysql                       install_mysql_setup
+install_ondrej_apache               install_ondrej_php
+install_php_test                    install_postfix
+install_security                    install_speedtest
+install_syncthing                   install_terminal_utils
+install_webmin                      install_wp_cli
+restart_lamp                        setup_fqdn
+setup_hostname                      setup_script_log
+setup_apache                        setup_mysql
+setup_security                      setup_security_sshd
+setup_sudo_user                     setup_syncthing
+setup_unattended_upgrades           wp_cron_to_crontab
 "	
 }
 
@@ -170,20 +170,8 @@ function gen_password {
 	echo "$(sed -e 's/[[:space:]]*$//' <<<${PASS})"
 }
 
-function get_parent_dir {
-	echo "$(dirname "$(pwd)")"
-}
-
 function get_all_users {
 	cut -d: -f1 /etc/passwd
-}
-
-function get_random_lwr_string {
-	if [ ! -n "$1" ];
-		then LEN="3"
-		else LEN="$1"
-	fi
-	echo "$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w $LEN | head -n 1)"	
 }
 
 function get_lamp_status {
@@ -196,8 +184,24 @@ function get_lamp_status {
 	echo "$(sudo ufw status verbose)"	
 }
 
+function get_parent_dir {
+	echo "$(dirname "$(pwd)")"
+}
+
 function get_php_version {
 	echo "$(systemctl status | grep -io 'php[7-9].[0-9]')"
+}
+
+function get_public_ip {
+    echo "$(curl ifconfig.me)"
+}
+
+function get_random_lwr_string {
+	if [ ! -n "$1" ];
+		then LEN="3"
+		else LEN="$1"
+	fi
+	echo "$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w $LEN | head -n 1)"	
 }
 
 function hdd_test {
@@ -438,7 +442,7 @@ function install_wp_cli {
 function restart_lamp {
 	systemctl restart apache2
 	PHP="$(get_php_version)"
-	systemctl restart "$PHP"
+	systemctl restart "$PHP-fpm"
 	systemctl restart memcached
 	systemctl restart mysql
 }
@@ -452,7 +456,7 @@ function setup_fqdn {
 		echo "setup_fqdn() requires the FQDN as its first argument"
 		return 1;		
 	fi			
-	echo "$(system_primary_ip) $FQDN $HOSTNAME" >> /etc/hosts
+	echo "$(get_public_ip) $FQDN $HOSTNAME" >> /etc/hosts
 } 
 
 function setup_hostname {
