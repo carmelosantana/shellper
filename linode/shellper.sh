@@ -10,11 +10,11 @@ if [ ! -f "$SHELLPER_PATH" ]; then
         SHELLPER_BRANCH="master"
     fi
     git clone https://github.com/carmelosantana/shellper -b "$SHELLPER_BRANCH"
-    echo '● Git clone shellper.sh'
+    echo 'Git clone shellper.sh'
 fi
 
 if [ ! -f "$SHELLPER_PATH" ]; then
-    echo '● Error loading shellper.sh'
+    echo 'Error loading shellper.sh'
     exit 1
 fi
 

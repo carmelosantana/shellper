@@ -447,6 +447,32 @@ function restart_lamp {
 	systemctl restart mysql
 }
 
+# https://www.exchangecore.com/blog/sendmail-email-fixed-monospace-typewriter-font
+function sendmail_fixed {
+	if [ ! -n "$1" ]; then
+		echo "sendmail_fixed() requires a from address as the first argument"
+		return 1;		
+	fi
+	if [ ! -n "$2" ]; then
+		echo "sendmail_fixed() requires a from to address as the second argument"
+		return 1;		
+	fi
+	if [ ! -n "$3" ]; then
+		echo "sendmail_fixed() requires a subject as the third argument"
+		return 1;
+	fi
+	if [ ! -n "$4" ]; then
+		echo "sendmail_fixed() requires a body as the fourth argument"
+		return 1;
+	fi	
+	(
+		echo "From: $1";
+		echo "To: $2";
+		echo "Subject: $3";
+		cat "$SHELLPER_DIR/parts/mailheader" "$4" "$SHELLPER_DIR/parts/mailfooter"
+	) | sendmail -t	
+}
+
 function setup_fqdn {
 	if [ ! -n "$1" ]; then
 		echo "setup_fqdn() requires the HOSTNAME as its first argument"
@@ -593,9 +619,10 @@ function wp_cron_to_crontab {
 
 function _source_files {
 	# https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself?answertab=votes#tab-top
-	DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-	source "$DIR/linode/stackscripts/1.sh"
-	source "$DIR/linode/stackscripts/401712.sh"	
+	SHELLPER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+	source "$SHELLPER_DIR/linode/stackscripts/1.sh"
+	source "$SHELLPER_DIR/linode/stackscripts/401712.sh"
+	export SHELLPER_DIR	
 }
 
 _source_files
