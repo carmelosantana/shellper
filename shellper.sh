@@ -1,6 +1,6 @@
 #!/bin/bash
 # cd shellper && chmod +x shellper.sh && ./shellper.sh
-SHELLPER_VERSION="0.16"
+SHELLPER_VERSION="0.17"
 export SHELLPER_VERSION
 
 function _shellper_help {
@@ -17,9 +17,9 @@ ask_mariadb_mysql                   ask_reboot
 crontab_backup                      current_ssh_users
 debian_frontend_noninteractive      echo_install_complete
 file_change_append                  gen_password
-get_parent_dir                      get_all_users
-get_random_lwr_string               get_lamp_status
-get_php_version                     get_public_ip
+get_all_users                       get_lamp_status
+get_parent_dir                      get_php_version
+get_public_ip                       get_random_lwr_string
 hdd_test                            increase_lvm_size
 install_apache_mod_security         install_certbot
 install_fish                        install_geekbench
@@ -32,12 +32,13 @@ install_php_test                    install_postfix
 install_security                    install_speedtest
 install_syncthing                   install_terminal_utils
 install_webmin                      install_wp_cli
-restart_lamp                        setup_fqdn
-setup_hostname                      setup_script_log
-setup_apache                        setup_mysql
-setup_security                      setup_security_sshd
-setup_sudo_user                     setup_syncthing
-setup_unattended_upgrades           wp_cron_to_crontab
+restart_lamp                        sendmail_fixed
+setup_fqdn                          setup_hostname
+setup_script_log                    setup_apache
+setup_mysql                         setup_security
+setup_security_sshd                 setup_sudo_user
+setup_syncthing                     setup_unattended_upgrades
+stackscript_cleanup_ip4             wp_cron_to_crontab
 "	
 }
 
@@ -607,6 +608,15 @@ function setup_unattended_upgrades {
 	file_change_append "$APT_CONF" "APT::Periodic::Unattended-Upgrade" '"1";' 1
 	file_change_append "$APT_CONF" "APT::Periodic::Download-Upgradeable-Packages" '"1";'
 	file_change_append "$APT_CONF" "APT::Periodic::AutocleanInterval" '"7";'
+}
+
+# linode/stackscripts/401712.sh
+function stackscript_cleanup_ip4 {
+	# Force IPv4 and noninteractive upgrade after script runs to prevent breaking nf_conntrack for UFW
+	echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
+	apt_update_upgrade
+	rm /root/StackScript
+	rm /root/ssinclude*
 }
 
 function wp_cron_to_crontab {
