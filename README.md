@@ -42,6 +42,7 @@ Functions
 | ask_reboot ||
 | crontab_backup ||
 | current_ssh_users ||
+|debian_frontend_noninteractive||
 | echo_install_complete ||
 | file_change_append ||
 | gen_password ||
@@ -76,7 +77,7 @@ Functions
 | install_webmin ||
 | install_wp_cli ||
 | restart_lamp ||
-| setup_debian_frontend_noninteractive ||
+| sendmail_fixed ||
 | setup_fqdn ||
 | setup_hostname ||
 | setup_script_log ||
