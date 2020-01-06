@@ -42,7 +42,7 @@ Functions
 | ask_reboot ||
 | crontab_backup ||
 | current_ssh_users ||
-|debian_frontend_noninteractive||
+| debian_frontend_noninteractive ||
 | echo_install_complete ||
 | file_change_append ||
 | gen_password ||
@@ -88,6 +88,7 @@ Functions
 | setup_sudo_user ||
 | setup_syncthing ||
 | setup_unattended_upgrades ||
+| stackscript_cleanup_ip4 ||
 | wp_cron_to_crontab ||
 
 ## ToDo
@@ -101,7 +102,9 @@ Functions
 
 ## Recently completed
 
-- [x] Add options to functions with predefined values (hdd_test, increase_lvm_size)
+- [x] Fixed `debian_frontend_noninteractive`
+- [x] Added `sendmail` wrapper
+- [x] Added `stackscript_cleanup_ip4`
 
 ## License
 
