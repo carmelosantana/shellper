@@ -99,6 +99,7 @@ Functions
 - [ ] *Secure* LAMP
 - [ ] Check if root during `setup_sudo_user`
 - [ ] Add xdebug
+- [ ] Add [shunit2](https://github.com/kward/shunit2/)
 
 ## Recently completed
 
