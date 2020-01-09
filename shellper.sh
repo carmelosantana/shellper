@@ -519,7 +519,7 @@ function setup_apache {
 	apache_restart
 
 	sudo chown -Rv www-data:www-data "/var/www/"
-	sudo chmod -Rv 2755 "/var/www/"
+	sudo chmod 2775 "/var/www/"
 
 	sudo ufw allow 80
 	sudo ufw allow 443
@@ -599,6 +599,7 @@ function setup_syncthing {
 		sudo ufw allow syncthing-gui
 	fi
 
+	echo "fs.inotify.max_user_watches=204800" | sudo tee -a /etc/sysctl.conf
 	sudo systemctl enable "syncthing@${OWNER}.service"
 	sudo systemctl start "syncthing@${OWNER}.service"	
 }
