@@ -223,6 +223,12 @@ function increase_lvm_size {
 	sudo resize2fs "$LVM"
 }
 
+function install_acme_sh {
+	git clone https://github.com/Neilpang/acme.sh.git
+	cd ./acme.sh
+	./acme.sh --install
+}
+
 function install_apache_mod_security {
     sudo apt-get install libapache2-mod-security2 -y
     sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
@@ -599,7 +605,7 @@ function setup_syncthing {
 		sudo ufw allow syncthing-gui
 	fi
 
-	echo "fs.inotify.max_user_watches=204800" | sudo tee -a /etc/sysctl.conf
+	sudo echo "fs.inotify.max_user_watches=204800" | sudo tee -a /etc/sysctl.conf
 	sudo systemctl enable "syncthing@${OWNER}.service"
 	sudo systemctl start "syncthing@${OWNER}.service"	
 }
