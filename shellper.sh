@@ -1,6 +1,6 @@
 #!/bin/bash
 # cd shellper && chmod +x shellper.sh && ./shellper.sh
-SHELLPER_VERSION="0.17"
+SHELLPER_VERSION="0.18"
 export SHELLPER_VERSION
 
 function _shellper_help {
@@ -221,6 +221,12 @@ function increase_lvm_size {
 	sudo lvdisplay -m
 	sudo lvresize -l+100%FREE "$LVM"
 	sudo resize2fs "$LVM"
+}
+
+function install_acme_sh {
+	git clone https://github.com/Neilpang/acme.sh.git
+	cd ./acme.sh
+	./acme.sh --install
 }
 
 function install_apache_mod_security {
@@ -519,7 +525,7 @@ function setup_apache {
 	apache_restart
 
 	sudo chown -Rv www-data:www-data "/var/www/"
-	sudo chmod -Rv 2755 "/var/www/"
+	sudo chmod 2775 "/var/www/"
 
 	sudo ufw allow 80
 	sudo ufw allow 443
@@ -599,6 +605,7 @@ function setup_syncthing {
 		sudo ufw allow syncthing-gui
 	fi
 
+	sudo echo "fs.inotify.max_user_watches=204800" | sudo tee -a /etc/sysctl.conf
 	sudo systemctl enable "syncthing@${OWNER}.service"
 	sudo systemctl start "syncthing@${OWNER}.service"	
 }
