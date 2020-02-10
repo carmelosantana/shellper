@@ -1,6 +1,6 @@
 #!/bin/bash
 # cd shellper && chmod +x shellper.sh && ./shellper.sh
-SHELLPER_VERSION="0.17"
+SHELLPER_VERSION="0.18"
 export SHELLPER_VERSION
 
 function _shellper_help {
