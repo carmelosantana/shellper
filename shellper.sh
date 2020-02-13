@@ -249,10 +249,9 @@ function install_fish {
 }
 
 function install_geekbench {
-	wget http://cdn.primatelabs.com/Geekbench-5.0.4-Linux.tar.gz
-	tar -zxvf Geekbench-5.0.4-Linux.tar.gz
-	cd build.pulse/dist/Geekbench-5.0.4-Linux/
-	./geekbench5
+        wget http://cdn.geekbench.com/Geekbench-5.1.0-Linux.tar.gz
+        tar -zxvf Geekbench-*.*.*-Linux.tar.gz
+        ./Geekbench*/geekbench5
 }
 
 function install_imagemagick_ffmpeg {
