@@ -69,6 +69,7 @@ Functions
 | install_ondrej_apache ||
 | install_ondrej_php ||
 | install_php_test ||
+| install_phpbu ||
 | install_postfix ||
 | install_security ||
 | install_speedtest ||

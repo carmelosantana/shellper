@@ -1,6 +1,6 @@
 #!/bin/bash
 # cd shellper && chmod +x shellper.sh && ./shellper.sh
-SHELLPER_VERSION="0.18"
+SHELLPER_VERSION="0.19"
 export SHELLPER_VERSION
 
 function _shellper_help {
@@ -10,6 +10,9 @@ function _shellper_help {
 +------------------------+ v$SHELLPER_VERSION 
 [Joblets]
 install_lamp
+
+[Recently Added]
+install_phpbu
 
 [Functions]
 apache_restart                      apt_update_upgrade
@@ -396,6 +399,12 @@ function install_ondrej_php {
 
 function install_php_test {
 	sudo echo "<?php phpinfo();" > "/var/www/html/info.php"
+}
+
+function install_phpbu {
+	wget http://phar.phpbu.de/phpbu.phar
+	chmod +x phpbu.phar
+	sudo mv phpbu.phar /usr/local/bin/phpbu	
 }
 
 function install_postfix {
