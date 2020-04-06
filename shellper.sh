@@ -398,14 +398,14 @@ function install_ondrej_php {
 	apache_restart
 }
 
+function install_php_test {
+	sudo echo "<?php phpinfo();" > "/var/www/html/info.php"
+}
+
 function install_phpbu {
 	wget http://phar.phpbu.de/phpbu.phar
 	chmod +x phpbu.phar
 	sudo mv phpbu.phar /usr/local/bin/phpbu	
-}
-
-function install_php_test {
-	sudo echo "<?php phpinfo();" > "/var/www/html/info.php"
 }
 
 function install_postfix {
