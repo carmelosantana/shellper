@@ -1,6 +1,6 @@
 #!/bin/bash
 # cd shellper && chmod +x shellper.sh && ./shellper.sh
-SHELLPER_VERSION="0.19"
+SHELLPER_VERSION="0.2.0"
 export SHELLPER_VERSION
 
 function _shellper_help {
@@ -9,40 +9,71 @@ function _shellper_help {
 | Shellper - shellper.org|
 +------------------------+ v$SHELLPER_VERSION 
 [Joblets]
-install_lamp
-
-[Recently Added]
-install_phpbu
+ --install_lamp
 
 [Functions]
-apache_restart                      apt_update_upgrade
-ask_mariadb_mysql                   ask_reboot
-crontab_backup                      current_ssh_users
-debian_frontend_noninteractive      echo_install_complete
-file_change_append                  gen_password
-get_all_users                       get_lamp_status
-get_parent_dir                      get_php_version
-get_public_ip                       get_random_lwr_string
-hdd_test                            increase_lvm_size
-install_apache_mod_security         install_certbot
-install_fish                        install_geekbench
-install_imagemagick_ffmpeg          install_mariadb
-install_maxmind                     install_memcached
-install_mod_pagespeed               install_mycroft
-install_mysql                       install_mysql_setup
-install_ondrej_apache               install_ondrej_php
-install_php_test                    install_postfix
-install_security                    install_speedtest
-install_syncthing                   install_terminal_utils
-install_webmin                      install_wp_cli
-restart_lamp                        sendmail_fixed
-setup_fqdn                          setup_hostname
-setup_script_log                    setup_apache
-setup_mysql                         setup_security
-setup_security_sshd                 setup_sudo_user
-setup_syncthing                     setup_unattended_upgrades
-stackscript_cleanup_ip4             wp_cron_to_crontab
-"	
+ --apache_restart
+ --apt_update_upgrade
+ --ask_mariadb_mysql
+ --ask_reboot
+ --crontab_backup
+ --current_ssh_users
+ --debian_frontend_noninteractive
+ --echo_install_complete
+ --file_change_append
+ --gen_password
+ --get_all_users
+ --get_lamp_status
+ --get_parent_dir
+ --get_php_version
+ --get_public_ip
+ --get_random_lwr_string
+ --hdd_test
+ --increase_lvm_size
+ --install_acme_sh
+ --install_apache_mod_security
+ --install_certbot
+ --install_clamav
+ --install_fish
+ --install_geekbench
+ --install_imagemagick_ffmpeg
+ --install_lamp
+ --install_mariadb
+ --install_maxmind
+ --install_memcached
+ --install_mod_pagespeed
+ --install_mycroft
+ --install_mysql
+ --install_mysql_setup
+ --install_ondrej_apache
+ --install_ondrej_php
+ --install_php_test
+ --install_phpbu
+ --install_postfix
+ --install_rkhunter
+ --install_security
+ --install_speedtest
+ --install_syncthing
+ --install_terminal_utils
+ --install_webmin
+ --install_wp_cli
+ --restart_lamp
+ --sendmail_fixed
+ --setup_fqdn
+ --setup_hostname
+ --setup_script_log
+ --setup_apache
+ --setup_mysql
+ --setup_rkhunter
+ --setup_security
+ --setup_security_sshd
+ --setup_sudo_user
+ --setup_syncthing
+ --setup_unattended_upgrades
+ --stackscript_cleanup_ip4
+ --wp_cron_to_crontab
+
+"
 }
 
 function shellper {
@@ -246,6 +277,13 @@ function install_certbot {
 	sudo apt-get -y install certbot python-certbot-apache
 }
 
+function install_clamav {
+	sudo apt install clamav clamav-daemon
+	sudo systemctl stop clamav-freshclam
+	sudo freshclam
+	sudo systemctl start clamav-freshclam
+}
+
 function install_fish {
     sudo apt-get install fish -y
     chsh -s `which fish`
@@ -385,16 +423,20 @@ function install_ondrej_apache {
 function install_ondrej_php {
 	# TODO: Add default to latest
 	if [ ! -n "$1" ];
-		then PHP="php7.4"
-		else PHP="$1"
+		then PHP="php8.0"
+		else PHP="php$1"
 	fi
     export PHP
     echo | sudo add-apt-repository ppa:ondrej/php
-    sudo apt-get -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-json $PHP-int $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xmlrpc $PHP-xsl $PHP-zip php-memcached
-    a2enmod proxy_fcgi setenvif
-	a2enconf "$PHP"-fpm
-	a2dismod "$PHP"
-	apache_restart
+    sudo apt-get -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-int $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-memcached
+	if [ ! command -v a2enmod &> /dev/null ]; then
+		echo "Apache not installed."
+	else
+		a2enmod proxy_fcgi setenvif
+		a2enconf "$PHP"-fpm
+		a2dismod "$PHP"
+		apache_restart
+	fi
 }
 
 function install_php_test {
@@ -409,6 +451,14 @@ function install_phpbu {
 
 function install_postfix {
     sudo DEBIAN_FRONTEND=noninteractive apt -y install postfix    
+}
+
+function install_rkhunter {
+	VERSION="1.4.6"
+	wget "https://downloads.sourceforge.net/project/rkhunter/rkhunter/$VERSION/rkhunter-$VERSION.tar.gz"
+	tar zxvf "rkhunter-$VERSION.tar.gz"
+	cd "rkhunter-$VERSION"
+	sh installer.sh --layout default --install
 }
 
 function install_security {
@@ -526,10 +576,14 @@ function setup_apache {
 	if [ ! -n "$1" ];
 		then APACHE_MEM=20
 		else APACHE_MEM="$1"
-	fi	
-    sudo a2enmod actions expires proxy_fcgi proxy_http rewrite ssl vhost_alias http2 proxy_http2 setenvif
-	sudo a2enconf php7.4-fpm
-    apache_tune "$APACHE_MEM"
+	fi
+	if [ ! -n "$2" ];
+		then PHP="php8.0"
+		else PHP="php$1"
+	fi		
+	sudo a2enmod actions expires proxy_fcgi proxy_http rewrite ssl vhost_alias http2 proxy_http2 setenvif
+	sudo a2enconf "$PHP-fpm"
+	apache_tune "$APACHE_MEM"
 	apache_restart
 
 	sudo chown -Rv www-data:www-data "/var/www/"
@@ -542,6 +596,14 @@ function setup_apache {
 function setup_mysql {
 	mysql_tune
 	mysql_secure_installation
+}
+
+function setup_rkhunter {
+	rkhunter --update
+	rkhunter --propupd
+
+	# checkall
+	rkhunter -c -sk
 }
 
 function setup_security {
