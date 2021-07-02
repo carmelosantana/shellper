@@ -258,7 +258,7 @@ function increase_lvm_size {
 }
 
 function install_acme_sh {
-	git clone https://github.com/Neilpang/acme.sh.git
+	git clone https://github.com/acmesh-official/acme.sh
 	cd ./acme.sh
 	./acme.sh --install
 }
@@ -267,6 +267,24 @@ function install_apache_mod_security {
     sudo apt-get install libapache2-mod-security2 -y
     sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
     file_change_append "/etc/modsecurity/modsecurity.conf" "SecRuleEngine" "On" 0
+}
+
+function install_composer {
+	EXPECTED_CHECKSUM="$(php -r 'copy("https://composer.github.io/installer.sig", "php://stdout");')"
+	php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+	ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+
+	if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]
+	then
+		>&2 echo 'ERROR: Invalid installer checksum'
+		rm composer-setup.php
+		exit 1
+	fi
+
+	php composer-setup.php --quiet
+	RESULT=$?
+	rm composer-setup.php
+	exit $RESULT	
 }
 
 function install_certbot {
@@ -304,10 +322,6 @@ function install_lamp {
 		then UNATTENDED="0"
 		else UNATTENDED="$1"
 	fi
-	if [ ! -n "$2" ];
-		then SUDO_USERNAME="deploy"
-		else SUDO_USERNAME="$2"
-	fi
 
 	if [ "$UNATTENDED" = "0" ]; then
 		echo -n "Unattended install? (y)Yes (n)No (q)Quit: "
@@ -315,6 +329,7 @@ function install_lamp {
 	else
 		answer="y"
 	fi
+
 	if echo "$answer" | grep -iq "^y"; then
 		UNATTENDED=1
 		debian_frontend_noninteractive
@@ -325,11 +340,8 @@ function install_lamp {
 		exit 1	
 	fi
 
-	setup_sudo_user "$SUDO_USERNAME"
-
 	apt_update_upgrade
 	setup_unattended_upgrades
-	install_security
 	install_ondrej_apache
 	install_ondrej_php
 	install_php_test
@@ -344,9 +356,6 @@ function install_lamp {
 	if [ "$MYSQL_SECURE" = "0" ]; then
 		echo "  - mysql_secure_installation"
 	fi
-	echo "  - Change 'PermitRootLogin' to 'no' in /etc/ssh/sshd_config followed by 'sudo systemctl restart ssh.service'"
-	echo "  -- systemctl restart ssh.service"
-	echo "  - sudo passwd $SUDO_PASSWORD"
 	echo_install_complete
 }
 
@@ -428,7 +437,7 @@ function install_ondrej_php {
 	fi
     export PHP
     echo | sudo add-apt-repository ppa:ondrej/php
-    sudo apt-get -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-int $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-memcached
+    sudo apt-get -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-int $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-imagick php-memcached
 	if [ ! command -v a2enmod &> /dev/null ]; then
 		echo "Apache not installed."
 	else
