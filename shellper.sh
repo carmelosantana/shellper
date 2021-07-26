@@ -4,7 +4,7 @@ SHELLPER_VERSION="0.2.0"
 export SHELLPER_VERSION
 
 function _shellper_help {
-    echo "
+	echo "
 +------------------------+
 | Shellper - shellper.org|
 +------------------------+ v$SHELLPER_VERSION 
@@ -82,8 +82,8 @@ function shellper {
 	read answer
 	if echo "$answer" | grep -iq "^q"; then
 		exit 0
-	elif [ -n "$answer" ]; then	
-	    ($answer)
+	elif [ -n "$answer" ]; then
+		($answer)
 		shellper
 	fi
 	echo -n
@@ -91,19 +91,20 @@ function shellper {
 }
 
 function apache_restart {
-    sudo systemctl restart apache2.service
+	sudo systemctl restart apache2.service
 }
 
-function apt_update_upgrade {	
+function apt_update_upgrade {
 	sudo apt-get update
 	# https://bugs.launchpad.net/ubuntu/+source/ansible/+bug/1833013 - 1/2/2020
-	UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qq -y upgrade	
+	UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qq -y upgrade
 }
 
 function ask_mariadb_mysql {
-	if [ ! -n "$1" ];
-		then UNATTENDED="0"
-		else UNATTENDED="$1"
+	if [ ! -n "$1" ]; then
+		UNATTENDED="0"
+	else
+		UNATTENDED="$1"
 	fi
 
 	if [ "$UNATTENDED" = "1" ]; then
@@ -122,7 +123,7 @@ function ask_mariadb_mysql {
 	else
 		MYSQL=0
 	fi
-	
+
 	# this will produce error when MySQL installed is skipped
 	if [ "$UNATTENDED" = "0" ] && [ "$MYSQL" = "1" ]; then
 		setup_mysql
@@ -137,12 +138,12 @@ function ask_mariadb_mysql {
 
 function ask_reboot {
 	echo -n "Reboot in 30 seconds ... CTRL C to exit script and cancel reboot."
-	sleep 30 
+	sleep 30
 	sudo reboot
 }
 
 function crontab_backup {
-	crontab -l > $(date +%Y%m%d).crontab
+	crontab -l >$(date +%Y%m%d).crontab
 }
 
 function current_ssh_users {
@@ -178,28 +179,29 @@ function file_change_append {
 
 	# check for line to edit
 	while read -r line || [[ -n "$line" ]]; do
-	    if [ `echo "$line" | grep -c -P "^\s*$2\s+"` = "1" ]; then
-	        match=1
-	        echo "$2 $3" >> $TMPFILE
-	    else
-	        echo "$line" >> $TMPFILE
-	    fi
-	done < $INFILE
-	
+		if [ $(echo "$line" | grep -c -P "^\s*$2\s+") = "1" ]; then
+			match=1
+			echo "$2 $3" >>$TMPFILE
+		else
+			echo "$line" >>$TMPFILE
+		fi
+	done <$INFILE
+
 	# append option if not found in config
 	if [ "$match" != "1" ] && [ "$4" = "1" ]; then
-	    echo "$2 $3" >> $TMPFILE
+		echo "$2 $3" >>$TMPFILE
 	fi
 
 	# cp -f $TMPFILE $INFILE
 	mv $TMPFILE $INFILE
-	sync	
+	sync
 }
 
 function gen_password {
-	if [ ! -n "$1" ];
-		then LEN="20"
-		else LEN="$1"
+	if [ ! -n "$1" ]; then
+		LEN="20"
+	else
+		LEN="$1"
 	fi
 	PASS="$(head -c 32 /dev/urandom | base64 | fold -w $LEN | head -n 1)"
 	echo "$(sed -e 's/[[:space:]]*$//' <<<${PASS})"
@@ -216,7 +218,7 @@ function get_lamp_status {
 	echo "$(systemctl status $PHP-fpm)"
 	echo "$(systemctl status mysql)"
 	echo "$(systemctl status memcached)"
-	echo "$(sudo ufw status verbose)"	
+	echo "$(sudo ufw status verbose)"
 }
 
 function get_parent_dir {
@@ -228,29 +230,32 @@ function get_php_version {
 }
 
 function get_public_ip {
-    echo "$(curl ifconfig.me)"
+	echo "$(curl ifconfig.me)"
 }
 
 function get_random_lwr_string {
-	if [ ! -n "$1" ];
-		then LEN="3"
-		else LEN="$1"
+	if [ ! -n "$1" ]; then
+		LEN="3"
+	else
+		LEN="$1"
 	fi
-	echo "$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w $LEN | head -n 1)"	
+	echo "$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w $LEN | head -n 1)"
 }
 
 function hdd_test {
-	if [ ! -n "$1" ];
-		then HDD="/dev/sda"
-		else HDD="$1"
+	if [ ! -n "$1" ]; then
+		HDD="/dev/sda"
+	else
+		HDD="$1"
 	fi
 	sudo hdparm -Tt "$HDD"
 }
 
 function increase_lvm_size {
-	if [ ! -n "$1" ];
-		then LVM="/dev/ubuntu-vg/ubuntu-lv"
-		else LVM="$1"
+	if [ ! -n "$1" ]; then
+		LVM="/dev/ubuntu-vg/ubuntu-lv"
+	else
+		LVM="$1"
 	fi
 	sudo lvdisplay -m
 	sudo lvresize -l+100%FREE "$LVM"
@@ -264,9 +269,9 @@ function install_acme_sh {
 }
 
 function install_apache_mod_security {
-    sudo apt-get install libapache2-mod-security2 -y
-    sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
-    file_change_append "/etc/modsecurity/modsecurity.conf" "SecRuleEngine" "On" 0
+	sudo apt-get install libapache2-mod-security2 -y
+	sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
+	file_change_append "/etc/modsecurity/modsecurity.conf" "SecRuleEngine" "On" 0
 }
 
 function install_composer {
@@ -274,9 +279,8 @@ function install_composer {
 	php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 	ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
 
-	if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]
-	then
-		>&2 echo 'ERROR: Invalid installer checksum'
+	if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]; then
+		echo >&2 'ERROR: Invalid installer checksum'
 		rm composer-setup.php
 		exit 1
 	fi
@@ -284,7 +288,7 @@ function install_composer {
 	php composer-setup.php --quiet
 	RESULT=$?
 	rm composer-setup.php
-	exit $RESULT	
+	exit $RESULT
 }
 
 function install_certbot {
@@ -303,24 +307,25 @@ function install_clamav {
 }
 
 function install_fish {
-    sudo apt-get install fish -y
-    chsh -s `which fish`
+	sudo apt-get install fish -y
+	chsh -s $(which fish)
 }
 
 function install_geekbench {
-        wget http://cdn.geekbench.com/Geekbench-5.1.0-Linux.tar.gz
-        tar -zxvf Geekbench-*.*.*-Linux.tar.gz
-        ./Geekbench*/geekbench5
+	wget http://cdn.geekbench.com/Geekbench-5.1.0-Linux.tar.gz
+	tar -zxvf Geekbench-*.*.*-Linux.tar.gz
+	./Geekbench*/geekbench5
 }
 
 function install_imagemagick_ffmpeg {
-	sudo apt-get -y install imagemagick ffmpeg	
+	sudo apt-get -y install imagemagick ffmpeg
 }
 
 function install_lamp {
-	if [ ! -n "$1" ];
-		then UNATTENDED="0"
-		else UNATTENDED="$1"
+	if [ ! -n "$1" ]; then
+		UNATTENDED="0"
+	else
+		UNATTENDED="$1"
 	fi
 
 	if [ "$UNATTENDED" = "0" ]; then
@@ -337,7 +342,7 @@ function install_lamp {
 	elif echo "$answer" | grep -iq "^n"; then
 		UNATTENDED=0
 	else
-		exit 1	
+		exit 1
 	fi
 
 	apt_update_upgrade
@@ -362,7 +367,7 @@ function install_lamp {
 function install_mariadb {
 	sudo apt-get -y install mariadb-server mariadb-client
 	echo "Sleeping while MySQL starts up for the first time..."
-	sleep 5	
+	sleep 5
 }
 
 function install_maxmind {
@@ -376,69 +381,72 @@ function install_memcached {
 }
 
 function install_mod_pagespeed {
-	if [ ! -n "$1" ];
-		then BRANCH="stable"
-		else BRANCH="$1"
+	if [ ! -n "$1" ]; then
+		BRANCH="stable"
+	else
+		BRANCH="$1"
 	fi
-	
-    case "$BRANCH" in
-    "beta")
-        wget https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-beta_current_amd64.deb
-        ;;
-    *)
-        wget https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_amd64.deb
-        ;;
-    esac
-	
+
+	case "$BRANCH" in
+	"beta")
+		wget https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-beta_current_amd64.deb
+		;;
+	*)
+		wget https://dl-ssl.google.com/dl/linux/direct/mod-pagespeed-stable_current_amd64.deb
+		;;
+	esac
+
 	sudo dpkg -i mod-pagespeed-*.deb
 	sudo apt-get -f -y install
 }
 
 function install_mycroft {
 	#TODO: Add avx check
-    grep avx /proc/cpuinfo
+	grep avx /proc/cpuinfo
 
-	if [ ! -n "$1" ];
-		then PATH="~/"
-		else PATH="$1"
+	if [ ! -n "$1" ]; then
+		PATH="~/"
+	else
+		PATH="$1"
 	fi
-    cd "$PATH"
-    git clone https://github.com/MycroftAI/mycroft-core.git
-    cd mycroft-core
-    bash dev_setup.sh    
+	cd "$PATH"
+	git clone https://github.com/MycroftAI/mycroft-core.git
+	cd mycroft-core
+	bash dev_setup.sh
 }
 
 function install_mysql {
 	sudo apt-get -y install mysql-server mysql-client
 	echo "Sleeping while MySQL starts up for the first time..."
-	sleep 5	
+	sleep 5
 }
 
 function install_mysql_setup {
 	if [ ! -n "$1" ]; then
 		echo "mysql_install() requires the root pass as its first argument"
-		return 1;
+		return 1
 	fi
 	echo "mysql-server mysql-server/root_password password $1" | debconf-set-selections
-	echo "mysql-server mysql-server/root_password_again password $1" | debconf-set-selections	
+	echo "mysql-server mysql-server/root_password_again password $1" | debconf-set-selections
 }
 
 function install_ondrej_apache {
-    echo | sudo add-apt-repository ppa:ondrej/apache2
+	echo | sudo add-apt-repository ppa:ondrej/apache2
 	apt_update_upgrade
-    sudo apt-get install apache2 apache2-utils -y
+	sudo apt-get install apache2 apache2-utils -y
 }
 
 function install_ondrej_php {
 	# TODO: Add default to latest
-	if [ ! -n "$1" ];
-		then PHP="php8.0"
-		else PHP="php$1"
+	if [ ! -n "$1" ]; then
+		PHP="php8.0"
+	else
+		PHP="php$1"
 	fi
-    export PHP
-    echo | sudo add-apt-repository ppa:ondrej/php
-    sudo apt-get -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-int $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-imagick php-memcached
-	if [ ! command -v a2enmod &> /dev/null ]; then
+	export PHP
+	echo | sudo add-apt-repository ppa:ondrej/php
+	sudo apt-get -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-int $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-imagick php-memcached
+	if [ ! command -v a2enmod ] &>/dev/null; then
 		echo "Apache not installed."
 	else
 		a2enmod proxy_fcgi setenvif
@@ -449,17 +457,17 @@ function install_ondrej_php {
 }
 
 function install_php_test {
-	sudo echo "<?php phpinfo();" > "/var/www/html/info.php"
+	sudo echo "<?php phpinfo();" >"/var/www/html/info.php"
 }
 
 function install_phpbu {
 	wget http://phar.phpbu.de/phpbu.phar
 	chmod +x phpbu.phar
-	sudo mv phpbu.phar /usr/local/bin/phpbu	
+	sudo mv phpbu.phar /usr/local/bin/phpbu
 }
 
 function install_postfix {
-    sudo DEBIAN_FRONTEND=noninteractive apt -y install postfix    
+	sudo DEBIAN_FRONTEND=noninteractive apt -y install postfix
 }
 
 function install_rkhunter {
@@ -476,30 +484,30 @@ function install_security {
 
 function install_speedtest {
 	# Source:
-    # https://fossbytes.com/test-internet-speed-linux-command-line/
-    sudo apt-get install -y python-pip
-    pip install speedtest-cli
-    speedtest-cli    
+	# https://fossbytes.com/test-internet-speed-linux-command-line/
+	sudo apt-get install -y python-pip
+	pip install speedtest-cli
+	speedtest-cli
 }
 
 function install_syncthing {
-    curl -s https://syncthing.net/release-key.txt | sudo apt-key add -
-    echo "deb https://apt.syncthing.net/ syncthing stable" | sudo tee /etc/apt/sources.list.d/syncthing.list
-    apt_update_upgrade
-    sudo apt-get install -y syncthing
+	curl -s https://syncthing.net/release-key.txt | sudo apt-key add -
+	echo "deb https://apt.syncthing.net/ syncthing stable" | sudo tee /etc/apt/sources.list.d/syncthing.list
+	apt_update_upgrade
+	sudo apt-get install -y syncthing
 }
 
 function install_terminal_utils {
-    apt_update_upgrade
-    sudo apt-get install -y aptitude expect git glances htop screen
+	apt_update_upgrade
+	sudo apt-get install -y aptitude expect git glances htop screen
 }
 
 function install_webmin {
-    curl -s http://www.webmin.com/jcameron-key.asc | sudo apt-key add -
-    echo "deb http://download.webmin.com/download/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
-    echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
-    apt_update_upgrade
-    sudo apt-get install -y webmin
+	curl -s http://www.webmin.com/jcameron-key.asc | sudo apt-key add -
+	echo "deb http://download.webmin.com/download/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
+	echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
+	apt_update_upgrade
+	sudo apt-get install -y webmin
 	if [ "$1" = "1" ]; then
 		sudo ufw allow webmin
 	fi
@@ -525,71 +533,74 @@ function restart_lamp {
 function sendmail_fixed {
 	if [ ! -n "$1" ]; then
 		echo "sendmail_fixed() requires a from address as the first argument"
-		return 1;		
+		return 1
 	fi
 	if [ ! -n "$2" ]; then
 		echo "sendmail_fixed() requires a from to address as the second argument"
-		return 1;		
+		return 1
 	fi
 	if [ ! -n "$3" ]; then
 		echo "sendmail_fixed() requires a subject as the third argument"
-		return 1;
+		return 1
 	fi
 	if [ ! -n "$4" ]; then
 		echo "sendmail_fixed() requires a body as the fourth argument"
-		return 1;
-	fi	
+		return 1
+	fi
 	(
-		echo "From: $1";
-		echo "To: $2";
-		echo "Subject: $3";
+		echo "From: $1"
+		echo "To: $2"
+		echo "Subject: $3"
 		cat "$SHELLPER_DIR/parts/mailheader" "$4" "$SHELLPER_DIR/parts/mailfooter"
-	) | sendmail -t	
+	) | sendmail -t
 }
 
 function setup_fqdn {
 	if [ ! -n "$1" ]; then
 		echo "setup_fqdn() requires the HOSTNAME as its first argument"
-		return 1;		
+		return 1
 	fi
 	if [ ! -n "$2" ]; then
 		echo "setup_fqdn() requires the FQDN as its first argument"
-		return 1;		
-	fi			
-	echo "$(get_public_ip) $FQDN $HOSTNAME" >> /etc/hosts
-} 
+		return 1
+	fi
+	echo "$(get_public_ip) $FQDN $HOSTNAME" >>/etc/hosts
+}
 
 function setup_hostname {
 	if [ ! -n "$1" ]; then
 		echo "setup_fqdn() requires the HOSTNAME as its first argument"
-		return 1;		
+		return 1
 	fi
 	if [ ! -n "$2" ]; then
 		echo "Optional: setup_fqdn() accepts the FQDN as its second argument"
-	fi	
+	fi
 	hostnamectl set-hostname $1
 	if [ -n "$2" ]; then
 		setup_fqdn $2 $1
-	fi		
+	fi
 }
 
 function setup_script_log {
-	if [ ! -n "$1" ];
-		then LOG="shellper-$(date +%Y%m%d-%H%M%S)"
-		else LOG="$1"
+	if [ ! -n "$1" ]; then
+		LOG="shellper-$(date +%Y%m%d-%H%M%S)"
+	else
+		LOG="$1"
 	fi
 	exec > >(tee -i "/var/log/$LOG.log")
 }
 
 function setup_apache {
-	if [ ! -n "$1" ];
-		then APACHE_MEM=20
-		else APACHE_MEM="$1"
+	if [ ! -n "$1" ]; then
+		APACHE_MEM=20
+	else
+		APACHE_MEM="$1"
 	fi
-	if [ ! -n "$2" ];
-		then PHP="php8.0"
-		else PHP="php$1"
-	fi		
+	if [ ! -n "$2" ]; then
+		PHP="php8.0"
+	else
+		PHP="php$1"
+	fi
 	sudo a2enmod actions expires proxy_fcgi proxy_http rewrite ssl vhost_alias http2 proxy_http2 setenvif
 	sudo a2enconf "$PHP-fpm"
 	apache_tune "$APACHE_MEM"
@@ -619,15 +630,15 @@ function setup_security {
 	setup_unattended_upgrades
 	ufw default allow outgoing
 	ufw default deny incoming
-	if [ -n "$1" ]; then 
+	if [ -n "$1" ]; then
 		ufw allow from "$1"
-	fi	
+	fi
 	echo y | ufw enable
 	systemctl enable ufw
 	fail2ban_install
 }
 
-function setup_security_sshd {	
+function setup_security_sshd {
 	SSHD_CONFIG="/etc/ssh/sshd_config"
 	sed -i "s/#AddressFamily any/AddressFamily inet/g" "$SSHD_CONFIG"
 	sed -i "s/PermitRootLogin yes/PermitRootLogin no/g" "$SSHD_CONFIG"
@@ -636,15 +647,17 @@ function setup_security_sshd {
 }
 
 function setup_sudo_user {
-	if [ ! -n "$1" ];
-		then USER="deploy"
-		else USER="$1"
+	if [ ! -n "$1" ]; then
+		USER="deploy"
+	else
+		USER="$1"
 	fi
-	if [ ! -n "$2" ];
-		then PASS="0"
-		else PASS="$2"
-	fi		
-	
+	if [ ! -n "$2" ]; then
+		PASS="0"
+	else
+		PASS="$2"
+	fi
+
 	sudo useradd $USER
 	sudo mkdir /home/$USER
 	sudo mkdir /home/$USER/.ssh
@@ -662,23 +675,25 @@ function setup_sudo_user {
 }
 
 function setup_syncthing {
-	if [ ! -n "$1" ];
-		then OWNER="deploy"
-		else OWNER="$1"
+	if [ ! -n "$1" ]; then
+		OWNER="deploy"
+	else
+		OWNER="$1"
 	fi
 
-	sudo systemctl start "syncthing@${OWNER}.service"	
+	sudo systemctl start "syncthing@${OWNER}.service"
 	sleep 30
-	sudo systemctl stop "syncthing@${OWNER}.service"	
+	sudo systemctl stop "syncthing@${OWNER}.service"
 
 	if [ "$2" = "1" ]; then
 		SYNCTHING_PATH=$(eval echo "~$OWNER")"/.config/syncthing/config.xml"
 		if [ -f "$SYNCTHING_PATH" ]; then
-			OWNER="www-data"; sed -i "s/127.0.0.1:8384/0.0.0.0:8384/g" "$SYNCTHING_PATH"
+			OWNER="www-data"
+			sed -i "s/127.0.0.1:8384/0.0.0.0:8384/g" "$SYNCTHING_PATH"
 		else
 			echo "setup_syncthing() can't find Syncthing config"
 		fi
-	fi	
+	fi
 	if [ "$3" = "1" ]; then
 		sudo ufw allow syncthing
 		sudo ufw allow syncthing-gui
@@ -686,7 +701,7 @@ function setup_syncthing {
 
 	sudo echo "fs.inotify.max_user_watches=204800" | sudo tee -a /etc/sysctl.conf
 	sudo systemctl enable "syncthing@${OWNER}.service"
-	sudo systemctl start "syncthing@${OWNER}.service"	
+	sudo systemctl start "syncthing@${OWNER}.service"
 }
 
 function setup_unattended_upgrades {
@@ -699,7 +714,7 @@ function setup_unattended_upgrades {
 # linode/stackscripts/401712.sh
 function stackscript_cleanup_ip4 {
 	# Force IPv4 and noninteractive upgrade after script runs to prevent breaking nf_conntrack for UFW
-	echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
+	echo 'Acquire::ForceIPv4 "true";' >/etc/apt/apt.conf.d/99force-ipv4
 	apt_update_upgrade
 	rm /root/StackScript
 	rm /root/ssinclude*
@@ -707,18 +722,18 @@ function stackscript_cleanup_ip4 {
 
 function wp_cron_to_crontab {
 	if [ -n "$1" ]; then
-        echo "0 1 * * * '/usr/local/bin/wp core update --allow-root --path=$1' > /dev/null 2>&1" >> wpcron
-        crontab wpcron
-        rm wpcron
+		echo "0 1 * * * '/usr/local/bin/wp core update --allow-root --path=$1' > /dev/null 2>&1" >>wpcron
+		crontab wpcron
+		rm wpcron
 	fi
 }
 
 function _source_files {
 	# https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself?answertab=votes#tab-top
-	SHELLPER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+	SHELLPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 	source "$SHELLPER_DIR/linode/stackscripts/1.sh"
 	source "$SHELLPER_DIR/linode/stackscripts/401712.sh"
-	export SHELLPER_DIR	
+	export SHELLPER_DIR
 }
 
 _source_files
