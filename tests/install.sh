@@ -1,0 +1,38 @@
+#!/bin/bash
+
+source ../shellper.sh
+
+install_clamav
+install_fail2ban
+install_fish
+install_geekbench
+install_imagemagick
+install_ffmpeg
+#install_mariadb
+install_maxmind
+install_memcached
+install_mod_pagespeed
+install_mysql
+#install_mysql_setup
+install_ondrej_apache
+install_ondrej_php
+install_php_test
+install_phpbu
+install_postfix
+install_rkhunter
+install_security
+install_speedtest
+install_syncthing
+install_terminal_utils
+install_virtualmin
+install_webmin
+install_wp_cli
+
+# install after apache
+install_acme_sh
+install_apache_mod_security
+install_composer
+install_certbot
+
+# status
+get_lamp_status
