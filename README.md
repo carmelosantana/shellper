@@ -1,16 +1,45 @@
 # Shellper
 
-Simple tools to automate server provisioning and maintenance.
+Another DevOps tool box.
+
+- [Shellper](#shellper)
+  - [Features](#features)
+  - [Tested](#tested)
+  - [Install](#install)
+  - [Use](#use)
+    - [Run](#run)
+    - [Include](#include)
+  - [Examples](#examples)
+    - [Quick LAMP install-lamp.sh](#quick-lamp-install-lampsh)
+  - [Support](#support)
+  - [Funding](#funding)
+  - [License](#license)
 
 [![install_lamp](https://raw.githubusercontent.com/carmelosantana/shellper-assets/master/install-lamp-v0.12.gif)](https://www.youtube.com/watch?v=RiqMoP9DCSU)
 
-## Compatible with
+## Features
 
-`Ubuntu 18.04 LTS` `Ubuntu 19.10`
+- Simple single file script
+- Time saving auto-complete commands via `rlwrap`
+- Run local or install globally
 
-## Usage
+## Tested
 
-1. Install
+| Shellper       | Ubuntu                    |
+| -------------- | ------------------------- |
+| `0.3.0 (main)` | `20.04.2 LTS` `18.04 LTS` |
+
+## Install
+
+One line install.
+
+```bash
+wget -O - https://raw.githubusercontent.com/carmelosantana/shellper/master/install.sh | bash
+```
+
+---
+
+Alternatively you can clone the repository and run Shellper locally.
 
 ```bash
 git clone https://github.com/carmelosantana/shellper.git shellper
@@ -18,96 +47,61 @@ cd "shellper"
 chmod +x shellper.sh
 ```
 
-2. Run
+## Use
+
+### Run
+
+**1.** Run global
 
 ```bash
-(sudo) ./shellper.sh
+shellper
 ```
 
-## Contents
+or local script
 
-Joblets
+```bash
+./shellper.sh
+```
 
-| Function | Arguments |
-| --- | --- |
-| install_lamp ||
+**2.** Start typing a command.
+  
+> If installed via [install.sh](install.sh) `rlwrap` will provide auto-complete.
 
-Functions
+### Include
 
-| Function | Arguments |
-| --- | --- |
-| apache_restart ||
-| apt_update_upgrade ||
-| ask_mariadb_mysql ||
-| ask_reboot ||
-| crontab_backup ||
-| current_ssh_users ||
-| debian_frontend_noninteractive ||
-| echo_install_complete ||
-| file_change_append ||
-| gen_password ||
-| get_all_users ||
-| get_lamp_status ||
-| get_parent_dir ||
-| get_php_version ||
-| get_public_ip ||
-| get_random_lwr_string ||
-| hdd_test ||
-| increase_lvm_size ||
-| install_apache_mod_security ||
-| install_certbot ||
-| install_fish ||
-| install_geekbench ||
-| install_imagemagick_ffmpeg ||
-| install_mariadb ||
-| install_maxmind ||
-| install_memcached ||
-| install_mod_pagespeed ||
-| install_mycroft ||
-| install_mysql ||
-| install_mysql_setup ||
-| install_ondrej_apache ||
-| install_ondrej_php ||
-| install_php_test ||
-| install_phpbu ||
-| install_postfix ||
-| install_security ||
-| install_speedtest ||
-| install_syncthing ||
-| install_terminal_utils ||
-| install_webmin ||
-| install_wp_cli ||
-| restart_lamp ||
-| sendmail_fixed ||
-| setup_fqdn ||
-| setup_hostname ||
-| setup_script_log ||
-| setup_apache ||
-| setup_mysql ||
-| setup_security ||
-| setup_security_sshd ||
-| setup_sudo_user ||
-| setup_syncthing ||
-| setup_unattended_upgrades ||
-| stackscript_cleanup_ip4 ||
-| wp_cron_to_crontab ||
+You can also include Shellper into your existing scripts or build entirely new scripts with just Shellper functions.
 
-## ToDo
+You can invoke the installer and include Shellper on the fly.
 
-- [ ] Link to `/usr/bin`
-- [ ] Apache Superset installer
-- [ ] WordPress joblets
-- [ ] *Secure* LAMP
-- [ ] Check if root during `setup_sudo_user`
-- [ ] Add xdebug
-- [ ] Add [shunit2](https://github.com/kward/shunit2/)
+## Examples
 
-## Recently completed
+### Quick LAMP [install-lamp.sh](examples/install-lamp.sh)
 
-- [x] Fixed `debian_frontend_noninteractive`
-- [x] Added `sendmail` wrapper
-- [x] Added `stackscript_cleanup_ip4`
+Provisions a PHP web server by performing the following:
+
+- Update system
+- Add [Ondřej Surý](https://launchpad.net/~ondrej/+archive/ubuntu/php/) PPA for latest stable releases
+- Apache
+  - Enables `mod_event`
+- PHP
+- PHP-FPM
+- Prompts the user to select MariaDB or MySQL
+- memcached
+- Postfix
+
+## Support
+
+⭐ [Contact](https://github.com/carmelosantana/) for commercial support.
+
+## Funding
+
+If you find this project useful or use it in a commercial environment please consider donating today with one of the following options.
+
+- [PayPal](https://www.paypal.com/donate?hosted_button_id=5RKFT8CT6DAVE)
+- Bitcoin `bc1qhxu9yf9g5jkazy6h4ux6c2apakfr90g2rkwu45`
+- Ethereum `0x9f5D6dd018758891668BF2AC547D38515140460f`
+- Tron `TFw3D8UwduZJvx8J4FPPgPVZ2PPJfyXs3k`
 
 ## License
 
-[MIT](https://en.wikipedia.org/wiki/MIT_License)
+The code is licensed [MIT](https://opensource.org/licenses/MIT) and the documentation is licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
