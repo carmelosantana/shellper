@@ -1,103 +1,103 @@
 #!/bin/bash
-# cd shellper && chmod +x shellper.sh && ./shellper.sh
-SHELLPER_VERSION="0.2.0"
-export SHELLPER_VERSION
 
-function _shellper_help {
-	echo "
-+------------------------+
-| Shellper - shellper.org|
-+------------------------+ v$SHELLPER_VERSION 
-[Joblets]
- --install_lamp
+#  +-+-+-+-+-+
+#  | Globals |
+#  +-+-+-+-+-+
+#
+#	Versioning and settings.
 
-[Functions]
- --apache_restart
- --apt_update_upgrade
- --ask_mariadb_mysql
- --ask_reboot
- --crontab_backup
- --current_ssh_users
- --debian_frontend_noninteractive
- --echo_install_complete
- --file_change_append
- --gen_password
- --get_all_users
- --get_lamp_status
- --get_parent_dir
- --get_php_version
- --get_public_ip
- --get_random_lwr_string
- --hdd_test
- --increase_lvm_size
- --install_acme_sh
- --install_apache_mod_security
- --install_certbot
- --install_clamav
- --install_fish
- --install_geekbench
- --install_imagemagick_ffmpeg
- --install_lamp
- --install_mariadb
- --install_maxmind
- --install_memcached
- --install_mod_pagespeed
- --install_mycroft
- --install_mysql
- --install_mysql_setup
- --install_ondrej_apache
- --install_ondrej_php
- --install_php_test
- --install_phpbu
- --install_postfix
- --install_rkhunter
- --install_security
- --install_speedtest
- --install_syncthing
- --install_terminal_utils
- --install_webmin
- --install_wp_cli
- --restart_lamp
- --sendmail_fixed
- --setup_fqdn
- --setup_hostname
- --setup_script_log
- --setup_apache
- --setup_mysql
- --setup_rkhunter
- --setup_security
- --setup_security_sshd
- --setup_sudo_user
- --setup_syncthing
- --setup_unattended_upgrades
- --stackscript_cleanup_ip4
- --wp_cron_to_crontab
+# Autocomplete hints
+SHELLPER_ASK_REBOOT="Reboot in 30 seconds... CTRL C to exit script and cancel reboot."
+SHELLPER_AUTOCOMPLETE_HINTS="apache_restart apt_update_upgrade ask_mariadb_mysql ask_reboot crontab_backup current_ssh_users file_change_append gen_password get_all_users get_lamp_status get_parent_dir get_php_version get_public_ip get_random_lwr_string hdd_test install_acme_sh install_apache_mod_security install_composer install_certbot install_clamav install_fish install_geekbench install_imagemagick install_ffmpeg install_mariadb install_maxmind install_memcached install_mod_pagespeed install_mycroft install_mysql install_mysql_setup install_ondrej_apache install_ondrej_php install_php_test install_phpbu install_postfix install_rkhunter install_security install_speedtest install_syncthing install_terminal_utils install_virtualmin install_webmin install_wp_cli restart_lamp setup_fqdn setup_hostname setup_script_log setup_apache setup_mysql setup_rkhunter setup_security setup_security_sshd setup_sudo_user setup_syncthing setup_unattended_upgrades"
+SHELLPER_COMMAND_NOT_FOUND="Command not found"
+SHELLPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)" # https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself?answertab=votes#tab-top
+SHELLPER_HELP_AUTOCOMPLETE="• Press tab ⇄ to show command suggestions."
+SHELLPER_HELP_QUIT="• Type q or exit to quit."
+SHELLPER_HELP_START="[Start] Type a command: "
+SHELLPER_VERSION="0.2.1"
 
-"
+# Geekbench
+GEEKBENCH_VERSION="5.4.1"
+
+# PHP
+PHP_VERSION="8.0"
+
+# Rootkit Hunter
+RKHUNTER_VERSION="1.4.6"
+
+#  +--------------------+
+#  | Shellper internals |
+#  +--------------------+
+#
+#	Functions that support running Shellper.
+
+function shellper_logo {
+	cat <<EOF
+	
+  █████████  █████               ████  ████                              
+ ███░░░░░███░░███               ░░███ ░░███                              
+░███    ░░░  ░███████    ██████  ░███  ░███  ████████   ██████  ████████ 
+░░█████████  ░███░░███  ███░░███ ░███  ░███ ░░███░░███ ███░░███░░███░░███
+ ░░░░░░░░███ ░███ ░███ ░███████  ░███  ░███  ░███ ░███░███████  ░███ ░░░ 
+ ███    ░███ ░███ ░███ ░███░░░   ░███  ░███  ░███ ░███░███░░░   ░███     
+░░█████████  ████ █████░░██████  █████ █████ ░███████ ░░██████  █████    
+ ░░░░░░░░░  ░░░░ ░░░░░  ░░░░░░  ░░░░░ ░░░░░  ░███░░░   ░░░░░░  ░░░░░     
+                                             ░███                        
+                                             █████                       
+                                            ░░░░░ v$SHELLPER_VERSION
+
+EOF
 }
 
 function shellper {
-	_shellper_help
-	echo -n "Type a command or Q to quit: "
-	read answer
-	if echo "$answer" | grep -iq "^q"; then
-		exit 0
-	elif [ -n "$answer" ]; then
-		($answer)
-		shellper
+	# Only show one during first load
+	if [ "$1" != "0" ]; then
+		shellper_logo
 	fi
-	echo -n
-	exit 0
+
+	# If vlwrap is not installed go without autocomplete
+	if ! command -v rlwrap &>/dev/null; then
+		echo -n "$SHELLPER_HELP_START"
+		read answer
+	else
+		# Only show one during first load
+		if [ "$1" != "0" ]; then
+			echo "$SHELLPER_HELP_AUTOCOMPLETE"
+		fi
+
+		# Autocomplete suggestions
+		# https://unix.stackexchange.com/questions/278631/bash-script-auto-complete-for-user-input-based-on-array-data
+		answer=$(rlwrap -S "$SHELLPER_HELP_START" -e '' -i -f <(echo "${SHELLPER_AUTOCOMPLETE_HINTS[@]}") -o cat)
+	fi
+
+	# Exiting
+	if echo "$answer" | grep -iq "^q\|^exit"; then
+		exit 0
+
+	# Command was provided via user input
+	elif [ -n "$answer" ] && [[ $(type -t "$answer") == function ]]; then
+		($answer)
+	else
+		echo "[Error] $SHELLPER_COMMAND_NOT_FOUND:$answer"
+	fi
+
+	shellper 0
 }
+
+#  +-------------------+
+#  | Functions library |
+#  +-------------------+
+#
+#	Functions available to the end user during Shellper's execution.
 
 function apache_restart {
 	sudo systemctl restart apache2.service
 }
 
 function apt_update_upgrade {
-	sudo apt-get update
+	sudo apt update
 	# https://bugs.launchpad.net/ubuntu/+source/ansible/+bug/1833013 - 1/2/2020
-	UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qq -y upgrade
+	UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qq -y upgrade
 }
 
 function ask_mariadb_mysql {
@@ -129,7 +129,6 @@ function ask_mariadb_mysql {
 		setup_mysql
 		MYSQL_SECURE=1
 	elif [ "$MYSQL" = "1" ]; then
-		mysql_tune
 		MYSQL_SECURE=0
 	fi
 	export MYSQL
@@ -137,7 +136,7 @@ function ask_mariadb_mysql {
 }
 
 function ask_reboot {
-	echo -n "Reboot in 30 seconds ... CTRL C to exit script and cancel reboot."
+	echo -n "$SHELLPER_ASK_REBOOT"
 	sleep 30
 	sudo reboot
 }
@@ -159,9 +158,9 @@ function debian_frontend_noninteractive {
 
 function echo_install_complete {
 	echo
-	echo "+----------------+"
-	echo "|Install complete|"
-	echo "+----------------+"
+	echo "+------------------+"
+	echo "| Install complete |"
+	echo "+------------------+"
 	echo
 }
 
@@ -251,27 +250,15 @@ function hdd_test {
 	sudo hdparm -Tt "$HDD"
 }
 
-function increase_lvm_size {
-	if [ ! -n "$1" ]; then
-		LVM="/dev/ubuntu-vg/ubuntu-lv"
-	else
-		LVM="$1"
-	fi
-	sudo lvdisplay -m
-	sudo lvresize -l+100%FREE "$LVM"
-	sudo resize2fs "$LVM"
-}
-
 function install_acme_sh {
-	git clone https://github.com/acmesh-official/acme.sh
-	cd ./acme.sh
-	./acme.sh --install
+	wget -O -  https://get.acme.sh | sh
 }
 
 function install_apache_mod_security {
-	sudo apt-get install libapache2-mod-security2 -y
+	sudo apt install libapache2-mod-security2
 	sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
 	file_change_append "/etc/modsecurity/modsecurity.conf" "SecRuleEngine" "On" 0
+	sudo a2enmod security2
 }
 
 function install_composer {
@@ -292,92 +279,60 @@ function install_composer {
 }
 
 function install_certbot {
-	sudo apt-get -y install software-properties-common
+	sudo apt -y install software-properties-common
 	sudo add-apt-repository -y universe
 	sudo add-apt-repository -y ppa:certbot/certbot
 	apt_update_upgrade
-	sudo apt-get -y install certbot python-certbot-apache
+	sudo apt -y install certbot python-certbot-apache
 }
 
 function install_clamav {
-	sudo apt install clamav clamav-daemon
+	sudo apt -y install clamav clamav-daemon
 	sudo systemctl stop clamav-freshclam
 	sudo freshclam
 	sudo systemctl start clamav-freshclam
 }
 
+function install_fail2ban {
+	sudo apt -y install fail2ban
+	cp /etc/fail2ban/fail2ban.conf /etc/fail2ban/fail2ban.local
+	cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+	sudo systemctl start fail2ban
+	sudo systemctl enable fail2ban
+}
+
 function install_fish {
-	sudo apt-get install fish -y
+	sudo apt -y install fish
 	chsh -s $(which fish)
 }
 
 function install_geekbench {
-	wget http://cdn.geekbench.com/Geekbench-5.1.0-Linux.tar.gz
+	wget "http://cdn.geekbench.com/Geekbench-$GEEKBENCH_VERSION-Linux.tar.gz"
 	tar -zxvf Geekbench-*.*.*-Linux.tar.gz
-	./Geekbench*/geekbench5
 }
 
-function install_imagemagick_ffmpeg {
-	sudo apt-get -y install imagemagick ffmpeg
+function install_imagemagick {
+	sudo apt -y install imagemagick
 }
 
-function install_lamp {
-	if [ ! -n "$1" ]; then
-		UNATTENDED="0"
-	else
-		UNATTENDED="$1"
-	fi
-
-	if [ "$UNATTENDED" = "0" ]; then
-		echo -n "Unattended install? (y)Yes (n)No (q)Quit: "
-		read answer
-	else
-		answer="y"
-	fi
-
-	if echo "$answer" | grep -iq "^y"; then
-		UNATTENDED=1
-		debian_frontend_noninteractive
-
-	elif echo "$answer" | grep -iq "^n"; then
-		UNATTENDED=0
-	else
-		exit 1
-	fi
-
-	apt_update_upgrade
-	setup_unattended_upgrades
-	install_ondrej_apache
-	install_ondrej_php
-	install_php_test
-	ask_mariadb_mysql "$UNATTENDED"
-	postfix_install_loopback_only
-	install_memcached
-	get_lamp_status
-
-	echo -n "+ ToDo"
-	echo "  - Update hostname"
-	echo "  - General security"
-	if [ "$MYSQL_SECURE" = "0" ]; then
-		echo "  - mysql_secure_installation"
-	fi
-	echo_install_complete
+function install_ffmpeg {
+	sudo apt -y install ffmpeg
 }
 
 function install_mariadb {
-	sudo apt-get -y install mariadb-server mariadb-client
+	sudo apt -y install mariadb-server mariadb-client
 	echo "Sleeping while MySQL starts up for the first time..."
 	sleep 5
 }
 
 function install_maxmind {
-	echo | sudo add-apt-repository ppa:maxmind/ppa
+	sudo add-apt-repository -y ppa:maxmind/ppa
 	apt_update_upgrade
-	sudo apt-get -y install geoipupdate libmaxminddb0 libmaxminddb-dev mmdb-bin
+	sudo apt -y install geoipupdate libmaxminddb0 libmaxminddb-dev mmdb-bin
 }
 
 function install_memcached {
-	sudo apt-get -y install memcached
+	sudo apt -y install memcached
 }
 
 function install_mod_pagespeed {
@@ -386,6 +341,8 @@ function install_mod_pagespeed {
 	else
 		BRANCH="$1"
 	fi
+
+	wget -q -O- https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add
 
 	case "$BRANCH" in
 	"beta")
@@ -397,26 +354,11 @@ function install_mod_pagespeed {
 	esac
 
 	sudo dpkg -i mod-pagespeed-*.deb
-	sudo apt-get -f -y install
-}
-
-function install_mycroft {
-	#TODO: Add avx check
-	grep avx /proc/cpuinfo
-
-	if [ ! -n "$1" ]; then
-		PATH="~/"
-	else
-		PATH="$1"
-	fi
-	cd "$PATH"
-	git clone https://github.com/MycroftAI/mycroft-core.git
-	cd mycroft-core
-	bash dev_setup.sh
+	sudo apt -f -y install
 }
 
 function install_mysql {
-	sudo apt-get -y install mysql-server mysql-client
+	sudo apt -y install mysql-server mysql-client
 	echo "Sleeping while MySQL starts up for the first time..."
 	sleep 5
 }
@@ -431,21 +373,20 @@ function install_mysql_setup {
 }
 
 function install_ondrej_apache {
-	echo | sudo add-apt-repository ppa:ondrej/apache2
+	sudo add-apt-repository -y ppa:ondrej/apache2
 	apt_update_upgrade
-	sudo apt-get install apache2 apache2-utils -y
+	sudo apt install apache2 apache2-utils
 }
 
 function install_ondrej_php {
-	# TODO: Add default to latest
 	if [ ! -n "$1" ]; then
-		PHP="php8.0"
+		PHP="php$PHP_VERSION"
 	else
 		PHP="php$1"
 	fi
 	export PHP
-	echo | sudo add-apt-repository ppa:ondrej/php
-	sudo apt-get -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-int $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-imagick php-memcached
+	sudo add-apt-repository -y ppa:ondrej/php
+	sudo apt -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-int $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-imagick php-memcached
 	if [ ! command -v a2enmod ] &>/dev/null; then
 		echo "Apache not installed."
 	else
@@ -468,54 +409,68 @@ function install_phpbu {
 
 function install_postfix {
 	sudo DEBIAN_FRONTEND=noninteractive apt -y install postfix
+
+	# Installs postfix and configure to listen only on the local interface. Also
+	# allows for local mail delivery
+	echo "postfix postfix/main_mailer_type select Internet Site" | debconf-set-selections
+	echo "postfix postfix/mailname string localhost" | debconf-set-selections
+	echo "postfix postfix/destinations string localhost.localdomain, localhost" | debconf-set-selections
+
+	/usr/sbin/postconf -e "inet_interfaces = loopback-only"
+	#/usr/sbin/postconf -e "local_transport = error:local delivery is disabled"
+
+	sudo systemctl restart postfix
 }
 
 function install_rkhunter {
-	VERSION="1.4.6"
-	wget "https://downloads.sourceforge.net/project/rkhunter/rkhunter/$VERSION/rkhunter-$VERSION.tar.gz"
-	tar zxvf "rkhunter-$VERSION.tar.gz"
-	cd "rkhunter-$VERSION"
+	wget "https://downloads.sourceforge.net/project/rkhunter/rkhunter/$RKHUNTER_VERSION/rkhunter-$RKHUNTER_VERSION.tar.gz"
+	tar zxvf "rkhunter-$RKHUNTER_VERSION.tar.gz"
+	cd "rkhunter-$RKHUNTER_VERSION"
 	sh installer.sh --layout default --install
 }
 
 function install_security {
-	sudo apt-get -y install fail2ban ufw
+	sudo apt -y install fail2ban ufw
 }
 
 function install_speedtest {
 	# Source:
 	# https://fossbytes.com/test-internet-speed-linux-command-line/
-	sudo apt-get install -y python-pip
+	sudo apt install -y python3-pip
 	pip install speedtest-cli
-	speedtest-cli
 }
 
 function install_syncthing {
-	curl -s https://syncthing.net/release-key.txt | sudo apt-key add -
+	wget -q -O- https://syncthing.net/release-key.txt | sudo apt-key add
 	echo "deb https://apt.syncthing.net/ syncthing stable" | sudo tee /etc/apt/sources.list.d/syncthing.list
 	apt_update_upgrade
-	sudo apt-get install -y syncthing
+	sudo apt install -y syncthing
 }
 
 function install_terminal_utils {
 	apt_update_upgrade
-	sudo apt-get install -y aptitude expect git glances htop screen
+	sudo apt install -y aptitude expect git glances screen
+}
+
+function install_virtualmin {
+	wget https://software.virtualmin.com/gpl/scripts/install.sh
+	chmod +x install.sh
+	sudo ./install.sh
 }
 
 function install_webmin {
-	curl -s http://www.webmin.com/jcameron-key.asc | sudo apt-key add -
+	wget -q -O- http://www.webmin.com/jcameron-key.asc | sudo apt-key add
 	echo "deb http://download.webmin.com/download/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
 	echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
 	apt_update_upgrade
-	sudo apt-get install -y webmin
+	sudo apt install -y webmin
 	if [ "$1" = "1" ]; then
 		sudo ufw allow webmin
 	fi
 }
 
 function install_wp_cli {
-	curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-	# TODO: Add check
+	wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 	php wp-cli.phar --info
 	chmod +x wp-cli.phar
 	sudo mv wp-cli.phar /usr/local/bin/wp
@@ -551,7 +506,7 @@ function sendmail_fixed {
 		echo "From: $1"
 		echo "To: $2"
 		echo "Subject: $3"
-		cat "$SHELLPER_DIR/parts/mailheader" "$4" "$SHELLPER_DIR/parts/mailfooter"
+		cat "$(email_header)" "$4" "$(email_footer)"
 	) | sendmail -t
 }
 
@@ -564,6 +519,8 @@ function setup_fqdn {
 		echo "setup_fqdn() requires the FQDN as its first argument"
 		return 1
 	fi
+
+	# TODO: Consider change to localhost
 	echo "$(get_public_ip) $FQDN $HOSTNAME" >>/etc/hosts
 }
 
@@ -596,14 +553,16 @@ function setup_apache {
 	else
 		APACHE_MEM="$1"
 	fi
+
 	if [ ! -n "$2" ]; then
 		PHP="php8.0"
 	else
 		PHP="php$1"
 	fi
-	sudo a2enmod actions expires proxy_fcgi proxy_http rewrite ssl vhost_alias http2 proxy_http2 setenvif
+
+	sudo a2dismod mpm_prefork mpm_worker "$PHP"
+	sudo a2enmod actions expires proxy_fcgi proxy_http rewrite ssl vhost_alias http2 proxy_http2 setenvif mpm_event
 	sudo a2enconf "$PHP-fpm"
-	apache_tune "$APACHE_MEM"
 	apache_restart
 
 	sudo chown -Rv www-data:www-data "/var/www/"
@@ -614,7 +573,6 @@ function setup_apache {
 }
 
 function setup_mysql {
-	mysql_tune
 	mysql_secure_installation
 }
 
@@ -711,32 +669,52 @@ function setup_unattended_upgrades {
 	file_change_append "$APT_CONF" "APT::Periodic::AutocleanInterval" '"7";'
 }
 
-# linode/stackscripts/401712.sh
-function stackscript_cleanup_ip4 {
-	# Force IPv4 and noninteractive upgrade after script runs to prevent breaking nf_conntrack for UFW
-	echo 'Acquire::ForceIPv4 "true";' >/etc/apt/apt.conf.d/99force-ipv4
-	apt_update_upgrade
-	rm /root/StackScript
-	rm /root/ssinclude*
+#  +-----------------+
+#  | Email templates |
+#  +-----------------+
+#
+#  Parts for composing emails.
+
+function email_header {
+	cat <<EOF
+MIME-Version: 1.0
+Content-Type: text/html
+Content-Disposition: inline
+<html>
+<body>
+<pre style="font: monospace">
+EOF
 }
 
-function wp_cron_to_crontab {
-	if [ -n "$1" ]; then
-		echo "0 1 * * * '/usr/local/bin/wp core update --allow-root --path=$1' > /dev/null 2>&1" >>wpcron
-		crontab wpcron
-		rm wpcron
-	fi
+function email_footer {
+	cat <<EOF
+</pre>
+</body>
+</html>
+EOF
 }
 
-function _source_files {
-	# https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself?answertab=votes#tab-top
-	SHELLPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-	source "$SHELLPER_DIR/linode/stackscripts/1.sh"
-	source "$SHELLPER_DIR/linode/stackscripts/401712.sh"
-	export SHELLPER_DIR
+#  +----------------------+
+#  | Deprecated Functions |
+#  +----------------------+
+#
+#  Patches to keep deprecated functions working as expected. These functions
+#  are no longer supported and should not be used.
+
+function install_imagemagick_ffmpeg {
+	install_ffmpeg
+	install_imagemagick
 }
 
-_source_files
+function install_php_test {
+	install_phpinfo
+}
+
+#  +-----------------+
+#  | Launch Shellper |
+#  +-----------------+
+#
+#	Launch script if primary processes.
 
 if [[ "$0" = "$BASH_SOURCE" ]]; then
 	shellper
