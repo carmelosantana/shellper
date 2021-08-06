@@ -15,7 +15,7 @@ Another DevOps tool box.
   - [Funding](#funding)
   - [License](#license)
 
-[![install_lamp](https://raw.githubusercontent.com/carmelosantana/shellper-assets/master/install-lamp-v0.12.gif)](https://www.youtube.com/watch?v=RiqMoP9DCSU)
+[![Shellper screenshot](assets/shellper-screenshot.png)](https://www.youtube.com/watch?v=RiqMoP9DCSU)
 
 ## Features
 
