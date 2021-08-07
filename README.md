@@ -25,9 +25,11 @@ Another DevOps tool box.
 
 ## Tested
 
-| Shellper       | Ubuntu                    |
-| -------------- | ------------------------- |
-| `0.3.0 (main)` | `20.04.2 LTS` `18.04 LTS` |
+| Shellper | Distribution | Version                   | Comments                         |
+| -------- | ------------ | ------------------------- | -------------------------------- |
+| `0.2.1`  | Ubuntu       | `20.04.2 LTS` `18.04 LTS` |                                  |
+| `0.2.1`  | Debian       | `10`                      | Unattended upgrades, missing UFW |
+
 
 ## Install
 
