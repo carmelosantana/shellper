@@ -22,3 +22,4 @@ mv "$SHELLPER" /usr/local/bin/shellper
 
 # We're done
 echo -n "Install complete."
+echo
