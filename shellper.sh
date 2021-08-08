@@ -14,7 +14,7 @@ SHELLPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)" # h
 SHELLPER_HELP_AUTOCOMPLETE="• Press tab ⇄ to show command suggestions."
 SHELLPER_HELP_QUIT="• Type q or exit to quit."
 SHELLPER_HELP_START="[Start] Type a command: "
-SHELLPER_VERSION="0.2.1"
+SHELLPER_VERSION="0.2.2"
 
 # Geekbench
 GEEKBENCH_VERSION="5.4.1"
@@ -593,7 +593,6 @@ function setup_security {
 	fi
 	echo y | ufw enable
 	systemctl enable ufw
-	fail2ban_install
 }
 
 function setup_security_sshd {
