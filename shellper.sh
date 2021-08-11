@@ -14,7 +14,7 @@ SHELLPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)" # h
 SHELLPER_HELP_AUTOCOMPLETE="• Press tab ⇄ to show command suggestions."
 SHELLPER_HELP_QUIT="• Type q or exit to quit."
 SHELLPER_HELP_START="[Start] Type a command: "
-SHELLPER_VERSION="0.2.2"
+SHELLPER_VERSION="0.2.3"
 
 # Geekbench
 GEEKBENCH_VERSION="5.4.1"
@@ -70,12 +70,15 @@ function shellper {
 		answer=$(rlwrap -S "$SHELLPER_HELP_START" -e '' -i -f <(echo "${SHELLPER_AUTOCOMPLETE_HINTS[@]}") -o cat)
 	fi
 
-	# Exiting
+	# Quit
 	if echo "$answer" | grep -iq "^q\|^exit"; then
 		exit 0
+	fi
+
+	answer_function=$(echo "$answer" | cut -f1 -d" ")
 
 	# Command was provided via user input
-	elif [ -n "$answer" ] && [[ $(type -t "$answer") == function ]]; then
+	if [ -n "$answer" ] && [[ $(type -t "$answer_function") == function ]]; then
 		($answer)
 	else
 		echo "[Error] $SHELLPER_COMMAND_NOT_FOUND:$answer"
@@ -242,6 +245,7 @@ function get_random_lwr_string {
 }
 
 function hdd_test {
+	# TODO: Add selectable drives
 	if [ ! -n "$1" ]; then
 		HDD="/dev/sda"
 	else
@@ -251,7 +255,7 @@ function hdd_test {
 }
 
 function install_acme_sh {
-	wget -O -  https://get.acme.sh | sh
+	wget -O - https://get.acme.sh | sh
 }
 
 function install_apache_mod_security {
