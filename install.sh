@@ -6,8 +6,8 @@ SHELLPER="shellper.sh"
 # Check + install dependencies
 for install in "rlwrap"; do
     if ! $(command -v "$install") &>/dev/null; then
-        sudo apt update
-        sudo apt install "$install" -y
+        apt update
+        apt install "$install" -y
     fi
 done
 
