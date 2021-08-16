@@ -14,7 +14,7 @@ SHELLPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)" # h
 SHELLPER_HELP_AUTOCOMPLETE="• Press tab ⇄ to show command suggestions."
 SHELLPER_HELP_QUIT="• Type q or exit to quit."
 SHELLPER_HELP_START="[Start] Type a command: "
-SHELLPER_VERSION="0.2.3"
+SHELLPER_VERSION="0.2.4"
 
 # Geekbench
 GEEKBENCH_VERSION="5.4.1"
@@ -279,7 +279,12 @@ function install_composer {
 	php composer-setup.php --quiet
 	RESULT=$?
 	rm composer-setup.php
-	exit $RESULT
+
+	if [ "$RESULT" != "0" ]; then
+		echo "$RESULT"
+	fi
+
+	sudo mv composer.phar /usr/local/bin/composer
 }
 
 function install_certbot {
@@ -390,7 +395,8 @@ function install_ondrej_php {
 	fi
 	export PHP
 	sudo add-apt-repository -y ppa:ondrej/php
-	sudo apt -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-int $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-imagick php-memcached
+	apt_update_upgrade
+	sudo apt -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-imagick php-memcached
 	if [ ! command -v a2enmod ] &>/dev/null; then
 		echo "Apache not installed."
 	else
