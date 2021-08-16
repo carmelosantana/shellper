@@ -6,6 +6,7 @@ Another DevOps tool box.
   - [Features](#features)
   - [Tested](#tested)
   - [Install](#install)
+  - [Uninstall](#uninstall)
   - [Use](#use)
     - [Run](#run)
     - [Include](#include)
@@ -25,10 +26,10 @@ Another DevOps tool box.
 
 ## Tested
 
-| Shellper | Distribution | Version                   | Comments                         |
-| -------- | ------------ | ------------------------- | -------------------------------- |
-| `0.2.1`  | Ubuntu       | `20.04.2 LTS` `18.04 LTS` |                                  |
-| `0.2.1`  | Debian       | `10`                      | Unattended upgrades, missing UFW |
+| Shellper | Distribution | Version       | Comments                         |
+| -------- | ------------ | ------------- | -------------------------------- |
+| `main`   | Ubuntu       | `20.04.2 LTS` |                                  |
+| `0.2.1`  | Debian       | `10`          | Unattended upgrades, missing UFW |
 
 
 ## Install
@@ -36,7 +37,7 @@ Another DevOps tool box.
 One line install.
 
 ```bash
-wget -O - https://raw.githubusercontent.com/carmelosantana/shellper/master/install.sh | bash
+wget -O - https://raw.githubusercontent.com/carmelosantana/shellper/master/install.sh | sudo bash
 ```
 
 ---
@@ -49,25 +50,39 @@ cd "shellper"
 chmod +x shellper.sh
 ```
 
+## Uninstall
+
+1. [`rlwrap`](https://github.com/hanslub42/rlwrap) is the only dependency installed by [install.sh](install.sh). Uninstall with:
+
+    ```bash
+    sudo apt remove rlwrap
+    ```
+
+2. The installer copies a single script. This can easily be removed with:
+
+    ```bash
+    sudo rm /usr/local/bin/shellper
+    ```
+
 ## Use
 
 ### Run
 
-**1.** Run global
+1. Run global
 
-```bash
-shellper
-```
+    ```bash
+    shellper
+    ```
 
-or local script
+    or local script
 
-```bash
-./shellper.sh
-```
+    ```bash
+    ./shellper.sh
+    ```
 
-**2.** Start typing a command.
-  
-> If installed via [install.sh](install.sh) `rlwrap` will provide auto-complete.
+2. Start typing a command.
+
+    > If installed via [install.sh](install.sh) `rlwrap` will provide auto-complete.
 
 ### Include
 
@@ -79,7 +94,7 @@ You can invoke the installer and include Shellper on the fly.
 
 ### Quick LAMP [install-lamp.sh](examples/install-lamp.sh)
 
-Provisions a PHP web server by performing the following:
+Provisions a performance oriented PHP web server with the following:
 
 - Update system
 - Add [Ondřej Surý](https://launchpad.net/~ondrej/+archive/ubuntu/php/) PPA for latest stable releases
