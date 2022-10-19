@@ -31,7 +31,7 @@ fi
 
 # Check + install dependencies
 for install in "rlwrap"; do
-	if command -v "$install" >/dev/null 2>&1; then
+	if ! command -v "$install" >/dev/null 2>&1; then
         apt update
         apt install -y "$install"
     fi
