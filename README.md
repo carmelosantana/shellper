@@ -2,19 +2,18 @@
 
 Another DevOps tool box.
 
-- [Shellper](#shellper)
-  - [Features](#features)
-  - [Tested](#tested)
-  - [Install](#install)
-  - [Uninstall](#uninstall)
-  - [Use](#use)
-    - [Run](#run)
-    - [Include](#include)
-  - [Examples](#examples)
-    - [Quick LAMP install-lamp.sh](#quick-lamp-install-lampsh)
-  - [Support](#support)
-  - [Funding](#funding)
-  - [License](#license)
+- [Features](#features)
+- [Supported](#supported)
+- [Install](#install)
+- [Uninstall](#uninstall)
+- [Use](#use)
+  - [Run](#run)
+  - [Include](#include)
+- [Examples](#examples)
+  - [Quick LAMP install-lamp.sh](#quick-lamp-install-lampsh)
+- [Support](#support)
+- [Funding](#funding)
+- [License](#license)
 
 [![Shellper screenshot](assets/shellper-screenshot.png)](https://www.youtube.com/watch?v=RiqMoP9DCSU)
 
@@ -24,7 +23,7 @@ Another DevOps tool box.
 - Time saving auto-complete commands via `rlwrap`
 - Run local or install globally
 
-## Tested
+## Supported
 
 | Shellper | Distribution | Version       | Comments                         |
 | -------- | ------------ | ------------- | -------------------------------- |
