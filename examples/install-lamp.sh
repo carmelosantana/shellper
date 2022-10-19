@@ -32,7 +32,6 @@ install_ondrej_php
 install_php_test
 ask_mariadb_mysql "$UNATTENDED"
 install_postfix
-install_memcached
 get_lamp_status
 
 echo -n "+ ToDo"
@@ -42,4 +41,4 @@ if [ "$MYSQL_SECURE" = "0" ]; then
     echo "  - mysql_secure_installation"
 fi
 
-echo_install_complete
+echo -n "Install complete."
