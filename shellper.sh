@@ -1,36 +1,23 @@
 #!/bin/bash
 
-#  +-+-+-+-+-+
-#  | Globals |
-#  +-+-+-+-+-+
-#
-#	Versioning and settings.
-
-# Autocomplete hints
-SHELLPER_ASK_REBOOT="Reboot in 30 seconds... CTRL C to exit script and cancel reboot."
-SHELLPER_AUTOCOMPLETE_HINTS="apache_restart apt_update_upgrade ask_mariadb_mysql ask_reboot crontab_backup current_ssh_users file_change_append gen_password get_all_users get_lamp_status get_parent_dir get_php_version get_public_ip get_random_lwr_string hdd_test install_acme_sh install_apache_mod_security install_composer install_certbot install_clamav install_fish install_geekbench install_imagemagick install_ffmpeg install_mariadb install_maxmind install_memcached install_mod_pagespeed install_mycroft install_mysql install_mysql_setup install_ondrej_apache install_ondrej_php install_php_test install_phpbu install_postfix install_rkhunter install_security install_speedtest install_syncthing install_terminal_utils install_virtualmin install_webmin install_wp_cli restart_lamp setup_fqdn setup_hostname setup_script_log setup_apache setup_mysql setup_rkhunter setup_security setup_security_sshd setup_sudo_user setup_syncthing setup_unattended_upgrades"
+SHELLPER_ASK_REBOOT="Reboot in 30 seconds... [ctrl] [c] to exit script and cancel reboot."
+SHELLPER_AUTOCOMPLETE_HINTS="apache_restart apt_update_upgrade ask_mariadb_mysql ask_reboot crontab_backup current_ssh_users debian_frontend_noninteractive file_change_append gen_password get_all_users get_lamp_status get_parent_dir get_php_version get_public_ip get_random_lwr_string get_ssh_session_ip hdd_test install_acme_sh install_apache_mod_security install_composer install_certbot install_clamav install_docker install_fail2ban install_fish install_geekbench install_mariadb install_maxmind install_memcached install_mod_pagespeed install_mysql install_mysql_setup install_mysql_to_sqlite3 install_ondrej_apache install_ondrej_php install_phpbu install_phpinfo install_portainer install_postfix install_python3_pip install_redis install_rkhunter install_security install_speedtest install_sqlite3_to_mysql install_syncthing install_terminal_utils install_virtualmin install_webmin install_wp_cli is_installed restart_lamp restart_lemp sendmail_fixed setup_cloudflare_ufw setup_apache setup_fqdn setup_hostname setup_mysql setup_rkhunter setup_ondrej_apache_repository setup_ondrej_php_repository setup_script_log setup_security setup_security_sshd setup_sudo_user setup_syncthing setup_unattended_upgrades"
 SHELLPER_COMMAND_NOT_FOUND="Command not found"
 SHELLPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)" # https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself?answertab=votes#tab-top
-SHELLPER_HELP_AUTOCOMPLETE="• Press tab ⇄ to show command suggestions."
-SHELLPER_HELP_QUIT="• Type q or exit to quit."
-SHELLPER_HELP_START="[Start] Type a command: "
-SHELLPER_VERSION="0.2.4"
+SHELLPER_HELP_AUTOCOMPLETE="• Press [tab ⇄] to show command suggestions."
+SHELLPER_HELP_START="Type a command: "
+SHELLPER_VERSION="0.3.0"
 
-# Geekbench
-GEEKBENCH_VERSION="5.4.1"
-
-# PHP
-PHP_VERSION="8.0"
-
-# Rootkit Hunter
+# Versions supported
+GEEKBENCH_VERSION="5.4.5"
+PHP_VERSION="8.1"
 RKHUNTER_VERSION="1.4.6"
 
-#  +--------------------+
-#  | Shellper internals |
-#  +--------------------+
-#
-#	Functions that support running Shellper.
+#  +----------------+
+#  | Shellper Init. |
+#  +----------------+
 
+# Logo and version.
 function shellper_logo {
 	cat <<EOF
 	
@@ -49,6 +36,7 @@ function shellper_logo {
 EOF
 }
 
+# Shellper launched from shellper.sh.
 function shellper {
 	# Only show one during first load
 	if [ "$1" != "0" ]; then
@@ -56,7 +44,7 @@ function shellper {
 	fi
 
 	# If vlwrap is not installed go without autocomplete
-	if ! command -v rlwrap &>/dev/null; then
+	if [ "$(is_installed rlwrap)" -eq 0 ]; then
 		echo -n "$SHELLPER_HELP_START"
 		read answer
 	else
@@ -87,11 +75,9 @@ function shellper {
 	shellper 0
 }
 
-#  +-------------------+
-#  | Functions library |
-#  +-------------------+
-#
-#	Functions available to the end user during Shellper's execution.
+#  +-----------+
+#  | Functions |
+#  +-----------+
 
 function apache_restart {
 	sudo systemctl restart apache2.service
@@ -159,14 +145,6 @@ function debian_frontend_noninteractive {
 	export UCF_FORCE_CONFOLD
 }
 
-function echo_install_complete {
-	echo
-	echo "+------------------+"
-	echo "| Install complete |"
-	echo "+------------------+"
-	echo
-}
-
 function file_change_append {
 	#TODO: Add checks for $1, $2, $3
 	INFILE=$1
@@ -219,7 +197,6 @@ function get_lamp_status {
 	echo "$(apachectl -M | grep --color security)"
 	echo "$(systemctl status $PHP-fpm)"
 	echo "$(systemctl status mysql)"
-	echo "$(systemctl status memcached)"
 	echo "$(sudo ufw status verbose)"
 }
 
@@ -228,7 +205,7 @@ function get_parent_dir {
 }
 
 function get_php_version {
-	echo "$(systemctl status | grep -io 'php[7-9].[0-9]')"
+	echo "$(systemctl status | grep -io 'php[7-99].[0-9]')"
 }
 
 function get_public_ip {
@@ -242,6 +219,10 @@ function get_random_lwr_string {
 		LEN="$1"
 	fi
 	echo "$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w $LEN | head -n 1)"
+}
+
+function get_ssh_session_ip {
+	echo "$SSH_CLIENT" | cut -d" " -f1
 }
 
 function hdd_test {
@@ -259,7 +240,7 @@ function install_acme_sh {
 }
 
 function install_apache_mod_security {
-	sudo apt install libapache2-mod-security2
+	sudo apt install -y libapache2-mod-security2
 	sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
 	file_change_append "/etc/modsecurity/modsecurity.conf" "SecRuleEngine" "On" 0
 	sudo a2enmod security2
@@ -288,22 +269,34 @@ function install_composer {
 }
 
 function install_certbot {
-	sudo apt -y install software-properties-common
+	sudo apt install -y software-properties-common
 	sudo add-apt-repository -y universe
 	sudo add-apt-repository -y ppa:certbot/certbot
 	apt_update_upgrade
-	sudo apt -y install certbot python-certbot-apache
+	sudo apt install -y certbot python-certbot-apache
 }
 
 function install_clamav {
-	sudo apt -y install clamav clamav-daemon
+	sudo apt install -y clamav clamav-daemon
 	sudo systemctl stop clamav-freshclam
 	sudo freshclam
 	sudo systemctl start clamav-freshclam
 }
 
+function install_docker {
+	if [ "$(is_installed docker)" -eq 0 ]; then
+		apt_update_upgrade
+		sudo apt install ca-certificates curl gnupg release
+		sudo mkdir -p /etc/apt/keyrings
+		curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+		echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+		apt_update_upgrade
+		sudo apt -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+	fi
+}
+
 function install_fail2ban {
-	sudo apt -y install fail2ban
+	sudo apt install -y fail2ban
 	cp /etc/fail2ban/fail2ban.conf /etc/fail2ban/fail2ban.local
 	cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 	sudo systemctl start fail2ban
@@ -311,25 +304,17 @@ function install_fail2ban {
 }
 
 function install_fish {
-	sudo apt -y install fish
+	sudo apt install -y fish
 	chsh -s $(which fish)
 }
 
 function install_geekbench {
-	wget "http://cdn.geekbench.com/Geekbench-$GEEKBENCH_VERSION-Linux.tar.gz"
+	wget "https://cdn.geekbench.com/Geekbench-$GEEKBENCH_VERSION-Linux.tar.gz"
 	tar -zxvf Geekbench-*.*.*-Linux.tar.gz
 }
 
-function install_imagemagick {
-	sudo apt -y install imagemagick
-}
-
-function install_ffmpeg {
-	sudo apt -y install ffmpeg
-}
-
 function install_mariadb {
-	sudo apt -y install mariadb-server mariadb-client
+	sudo apt install -y mariadb-server mariadb-client
 	echo "Sleeping while MySQL starts up for the first time..."
 	sleep 5
 }
@@ -337,11 +322,11 @@ function install_mariadb {
 function install_maxmind {
 	sudo add-apt-repository -y ppa:maxmind/ppa
 	apt_update_upgrade
-	sudo apt -y install geoipupdate libmaxminddb0 libmaxminddb-dev mmdb-bin
+	sudo apt install -y geoipupdate libmaxminddb0 libmaxminddb-dev mmdb-bin
 }
 
 function install_memcached {
-	sudo apt -y install memcached
+	sudo apt install -y memcached php-memcached
 }
 
 function install_mod_pagespeed {
@@ -367,7 +352,7 @@ function install_mod_pagespeed {
 }
 
 function install_mysql {
-	sudo apt -y install mysql-server mysql-client
+	sudo apt install -y mysql-server mysql-client
 	echo "Sleeping while MySQL starts up for the first time..."
 	sleep 5
 }
@@ -381,10 +366,13 @@ function install_mysql_setup {
 	echo "mysql-server mysql-server/root_password_again password $1" | debconf-set-selections
 }
 
+function install_mysql_to_sqlite3 {
+	install_python3_pip
+	pip install mysql-to-sqlite3
+}
+
 function install_ondrej_apache {
-	sudo add-apt-repository -y ppa:ondrej/apache2
-	apt_update_upgrade
-	sudo apt install apache2 apache2-utils
+	sudo apt install -y apache2 apache2-utils
 }
 
 function install_ondrej_php {
@@ -394,9 +382,7 @@ function install_ondrej_php {
 		PHP="php$1"
 	fi
 	export PHP
-	sudo add-apt-repository -y ppa:ondrej/php
-	apt_update_upgrade
-	sudo apt -y install $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-imagick php-memcached
+	sudo apt install -y $PHP libapache2-mod-$PHP $PHP-bcmath $PHP-cli $PHP-common $PHP-curl $PHP-fpm $PHP-gd $PHP-mbstring $PHP-mysql $PHP-opcache $PHP-pspell $PHP-readline $PHP-snmp $PHP-soap $PHP-sqlite3 $PHP-xml $PHP-xsl $PHP-zip php-imagick
 	if [ ! command -v a2enmod ] &>/dev/null; then
 		echo "Apache not installed."
 	else
@@ -407,18 +393,47 @@ function install_ondrej_php {
 	fi
 }
 
-function install_php_test {
-	sudo echo "<?php phpinfo();" >"/var/www/html/info.php"
-}
-
 function install_phpbu {
-	wget http://phar.phpbu.de/phpbu.phar
+	wget https://phar.phpbu.de/phpbu.phar
 	chmod +x phpbu.phar
 	sudo mv phpbu.phar /usr/local/bin/phpbu
 }
 
+function install_phpinfo {
+	sudo echo "<?php phpinfo();" >"/var/www/html/phpinfo.php"
+	sudo chown -R www-data:www-data /var/www/html
+}
+
+function install_portainer {
+	# Check if docker is installed.
+	install_docker
+
+	# Setup portainer data directory.
+	sudo docker volume create portainer_data
+
+	CMD='sudo docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/'
+	BUSINESS='portainer-ee:latest'
+	COMMUNITY='portainer-ce:latest'
+
+	if [ "$1" = "business" ]; then
+		CMD="$CMD$BUSINESS"
+	else
+		CMD="$CMD$COMMUNITY"
+	fi
+
+	# Execute $CMD
+	$CMD
+
+	# Check if Portainer is installed
+	if [ "$(sudo docker ps -a | grep portainer | wc -l)" -eq 1 ]; then
+		echo "Portainer installed successfully."
+	else
+		echo "Portainer failed to install."
+	fi
+}
+
 function install_postfix {
-	sudo DEBIAN_FRONTEND=noninteractive apt -y install postfix
+	sudo DEBIAN_FRONTEND=noninteractive apt install -y postfix
 
 	# Installs postfix and configure to listen only on the local interface. Also
 	# allows for local mail delivery
@@ -432,6 +447,22 @@ function install_postfix {
 	sudo systemctl restart postfix
 }
 
+function install_python3_pip {
+	if [ "$(is_installed python3-pip)" -eq 0 ]; then
+		apt_update_upgrade
+		sudo apt install -y python3-pip
+	fi
+}
+
+# https://redis.io/docs/getting-started/installation/install-redis-on-linux/
+function install_redis {
+	curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+	echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
+
+	apt_update_upgrade
+	sudo apt install -y redis
+}
+
 function install_rkhunter {
 	wget "https://downloads.sourceforge.net/project/rkhunter/rkhunter/$RKHUNTER_VERSION/rkhunter-$RKHUNTER_VERSION.tar.gz"
 	tar zxvf "rkhunter-$RKHUNTER_VERSION.tar.gz"
@@ -440,19 +471,25 @@ function install_rkhunter {
 }
 
 function install_security {
-	sudo apt -y install fail2ban ufw
+	sudo apt install -y fail2ban ufw
 }
 
 function install_speedtest {
-	# Source:
-	# https://fossbytes.com/test-internet-speed-linux-command-line/
-	sudo apt install -y python3-pip
+	# Source: https://fossbytes.com/test-internet-speed-linux-command-line/
+	# Check if pip is installed.
+	install_python3_pip
 	pip install speedtest-cli
 }
 
+function install_sqlite3_to_mysql {
+	install_python3_pip
+	pip install sqlite3-to-mysql
+}
+
+# https://apt.syncthing.net/
 function install_syncthing {
-	wget -q -O- https://syncthing.net/release-key.txt | sudo apt-key add
-	echo "deb https://apt.syncthing.net/ syncthing stable" | sudo tee /etc/apt/sources.list.d/syncthing.list
+	sudo curl -o /usr/share/keyrings/syncthing-archive-keyring.gpg https://syncthing.net/release-key.gpg
+	echo "deb [signed-by=/usr/share/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" | sudo tee /etc/apt/sources.list.d/syncthing.list
 	apt_update_upgrade
 	sudo apt install -y syncthing
 }
@@ -463,18 +500,30 @@ function install_terminal_utils {
 }
 
 function install_virtualmin {
+	CMD="--force"
+
+	if [ "$1" = "lemp" ] || [ "$2" = "lemp" ]; then
+		CMD="$CMD --bundle LEMP"
+	fi
+
+	if [ "$1" = "minimal" ] || [ "$2" = "minimal" ]; then
+		CMD="$CMD --minimal"
+	fi
+
 	wget https://software.virtualmin.com/gpl/scripts/install.sh
 	chmod +x install.sh
-	sudo ./install.sh
+	sudo ./install.sh $CMD
 }
 
+# https://linuxhint.com/install-and-use-webmin-in-ubuntu-22-04/
 function install_webmin {
-	wget -q -O- http://www.webmin.com/jcameron-key.asc | sudo apt-key add
-	echo "deb http://download.webmin.com/download/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
-	echo "deb http://webmin.mirror.somersettechsolutions.co.uk/repository sarge contrib" | sudo tee -a /etc/apt/sources.list
+	wget https://download.webmin.com/jcameron-key.asc cat jcameron-key.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/jcameron-key.gpg >/dev/null
+	sudo add-apt-repository "deb https://download.webmin.com/download/repository sarge contrib"
 	apt_update_upgrade
 	sudo apt install -y webmin
-	if [ "$1" = "1" ]; then
+
+	# If UFW is installed, allow Webmin through the firewall.
+	if [ "$(is_installed ufw)" -eq 0 ]; then
 		sudo ufw allow webmin
 	fi
 }
@@ -486,11 +535,28 @@ function install_wp_cli {
 	sudo mv wp-cli.phar /usr/local/bin/wp
 }
 
+# Check if a package is installed.
+# Usage: is_installed <package>
+function is_installed {
+	# Returns 1 if installed and 0 if not installed.
+	if command -v "$1" >/dev/null 2>&1; then
+		echo 1
+	else
+		echo 0
+	fi
+}
+
 function restart_lamp {
-	systemctl restart apache2
 	PHP="$(get_php_version)"
+	systemctl restart apache2
 	systemctl restart "$PHP-fpm"
-	systemctl restart memcached
+	systemctl restart mysql
+}
+
+function restart_lemp {
+	PHP="$(get_php_version)"
+	systemctl restart nginx
+	systemctl restart "$PHP-fpm"
 	systemctl restart mysql
 }
 
@@ -520,41 +586,20 @@ function sendmail_fixed {
 	) | sendmail -t
 }
 
-function setup_fqdn {
-	if [ ! -n "$1" ]; then
-		echo "setup_fqdn() requires the HOSTNAME as its first argument"
-		return 1
-	fi
-	if [ ! -n "$2" ]; then
-		echo "setup_fqdn() requires the FQDN as its first argument"
-		return 1
-	fi
-
-	# TODO: Consider change to localhost
-	echo "$(get_public_ip) $FQDN $HOSTNAME" >>/etc/hosts
-}
-
-function setup_hostname {
-	if [ ! -n "$1" ]; then
-		echo "setup_fqdn() requires the HOSTNAME as its first argument"
-		return 1
-	fi
-	if [ ! -n "$2" ]; then
-		echo "Optional: setup_fqdn() accepts the FQDN as its second argument"
-	fi
-	hostnamectl set-hostname $1
-	if [ -n "$2" ]; then
-		setup_fqdn $2 $1
-	fi
-}
-
-function setup_script_log {
-	if [ ! -n "$1" ]; then
-		LOG="shellper-$(date +%Y%m%d-%H%M%S)"
+function setup_cloudflare_ufw {
+	# User arguments are ports to open. If none are provided, open 80 and 443.
+	if [ -n "$1" ]; then
+		ports="$@"
 	else
-		LOG="$1"
+		ports="80 443"
 	fi
-	exec > >(tee -i "/var/log/$LOG.log")
+
+	# Loop through cloudflare IPs from https://www.cloudflare.com/ips-v4 and https://www.cloudflare.com/ips-v6 to open ports.
+	for ip in $(curl -s https://www.cloudflare.com/ips-v4) $(curl -s https://www.cloudflare.com/ips-v6); do
+		for port in $ports; do
+			sudo ufw allow from $ip to any proto tcp port $port
+		done
+	done
 }
 
 function setup_apache {
@@ -565,7 +610,7 @@ function setup_apache {
 	fi
 
 	if [ ! -n "$2" ]; then
-		PHP="php8.0"
+		PHP="php$PHP_VERSION"
 	else
 		PHP="php$1"
 	fi
@@ -582,6 +627,34 @@ function setup_apache {
 	sudo ufw allow 443
 }
 
+function setup_fqdn {
+	if [ ! -n "$1" ]; then
+		echo "setup_fqdn() requires the HOSTNAME as its first argument"
+		return 1
+	fi
+	if [ ! -n "$2" ]; then
+		echo "setup_fqdn() requires the FQDN as its first argument"
+		return 1
+	fi
+
+	# TODO: Consider change to localhost
+	echo "$(get_public_ip) $FQDN $HOSTNAME" >>/etc/hosts
+}
+
+function setup_hostname {
+	if [ ! -n "$1" ]; then
+		echo "setup_hostname() requires the HOSTNAME as its first argument"
+		return 1
+	fi
+	if [ ! -n "$2" ]; then
+		echo "Optional: setup_hostname() accepts the FQDN as its second argument"
+	fi
+	hostnamectl set-hostname $1
+	if [ -n "$2" ]; then
+		setup_fqdn $2 $1
+	fi
+}
+
 function setup_mysql {
 	mysql_secure_installation
 }
@@ -592,6 +665,25 @@ function setup_rkhunter {
 
 	# checkall
 	rkhunter -c -sk
+}
+
+function setup_ondrej_apache_repository {
+	sudo add-apt-repository -y ppa:ondrej/apache2
+	apt_update_upgrade
+}
+
+function setup_ondrej_php_repository {
+	sudo add-apt-repository -y ppa:ondrej/php
+	apt_update_upgrade
+}
+
+function setup_script_log {
+	if [ ! -n "$1" ]; then
+		LOG="shellper-$(date +%Y%m%d-%H%M%S)"
+	else
+		LOG="$1"
+	fi
+	exec > >(tee -i "/var/log/$LOG.log")
 }
 
 function setup_security {
@@ -643,7 +735,7 @@ function setup_sudo_user {
 
 function setup_syncthing {
 	if [ ! -n "$1" ]; then
-		OWNER="deploy"
+		OWNER="www-data"
 	else
 		OWNER="$1"
 	fi
@@ -661,12 +753,21 @@ function setup_syncthing {
 			echo "setup_syncthing() can't find Syncthing config"
 		fi
 	fi
-	if [ "$3" = "1" ]; then
-		sudo ufw allow syncthing
-		sudo ufw allow syncthing-gui
+
+	# https://docs.syncthing.net/users/firewall.html
+	if [ "$3" = "firewalld" ] || [ "$4" = "firewalld" ]; then
+		sudo firewall-cmd --zone=public --add-service=syncthing --permanent
+		sudo firewall-cmd --reload
 	fi
 
+	if [ "$3" = "ufw" ] || [ "$4" = "ufw" ]; then
+		sudo ufw allow 22000:23000/tcp
+	fi
+
+	# Fix filesytem error.
 	sudo echo "fs.inotify.max_user_watches=204800" | sudo tee -a /etc/sysctl.conf
+
+	# https://docs.syncthing.net/users/autostart.html
 	sudo systemctl enable "syncthing@${OWNER}.service"
 	sudo systemctl start "syncthing@${OWNER}.service"
 }
@@ -678,11 +779,9 @@ function setup_unattended_upgrades {
 	file_change_append "$APT_CONF" "APT::Periodic::AutocleanInterval" '"7";'
 }
 
-#  +-----------------+
-#  | Email templates |
-#  +-----------------+
-#
-#  Parts for composing emails.
+#  +-------------+
+#  | Email Parts |
+#  +-------------+
 
 function email_header {
 	cat <<EOF
@@ -703,28 +802,11 @@ function email_footer {
 EOF
 }
 
-#  +----------------------+
-#  | Deprecated Functions |
-#  +----------------------+
-#
-#  Patches to keep deprecated functions working as expected. These functions
-#  are no longer supported and should not be used.
+#  +----------+
+#  | Launcher |
+#  +----------+
 
-function install_imagemagick_ffmpeg {
-	install_ffmpeg
-	install_imagemagick
-}
-
-function install_php_test {
-	install_phpinfo
-}
-
-#  +-----------------+
-#  | Launch Shellper |
-#  +-----------------+
-#
-#	Launch script if primary processes.
-
+# Launch script if primary processes.
 if [[ "$0" = "$BASH_SOURCE" ]]; then
 	shellper
 fi
