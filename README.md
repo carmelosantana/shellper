@@ -1,35 +1,29 @@
 # Shellper
 
-Another DevOps tool box.
+[![Ubuntu 20.04, 22.04](https://img.shields.io/static/v1?label=Ubuntu&message=20.04+|+22.04&color=blue)](https://ubuntu.com/)
+[![License](https://img.shields.io/github/license/carmelosantana/shellper)](https://github.com/carmelosantana/shellper/blob/master/LICENSE)
+
+Web centric DevOps tool box.
 
 - [Features](#features)
-- [Supported](#supported)
 - [Install](#install)
 - [Uninstall](#uninstall)
 - [Use](#use)
   - [Run](#run)
   - [Include](#include)
 - [Examples](#examples)
-  - [Quick LAMP install-lamp.sh](#quick-lamp-install-lampsh)
+  - [Quick LAMP](#quick-lamp)
 - [Support](#support)
 - [Funding](#funding)
 - [License](#license)
 
-[![Shellper screenshot](assets/shellper-screenshot.png)](https://www.youtube.com/watch?v=RiqMoP9DCSU)
+[![Shellper screenshot](https://carmelosantana.com/wp-content/uploads/2022/10/Screen-Shot-2022-10-19-at-8.26.11-AM-8.png)](https://www.youtube.com/watch?v=RiqMoP9DCSU)
 
 ## Features
 
 - Simple single file script
-- Time saving auto-complete commands via `rlwrap`
+- Auto-complete commands via `rlwrap`
 - Run local or install globally
-
-## Supported
-
-| Shellper | Distribution | Version       | Comments                         |
-| -------- | ------------ | ------------- | -------------------------------- |
-| `main`   | Ubuntu       | `20.04.2 LTS` |                                  |
-| `0.2.1`  | Debian       | `10`          | Unattended upgrades, missing UFW |
-
 
 ## Install
 
@@ -81,28 +75,41 @@ chmod +x shellper.sh
 
 2. Start typing a command.
 
-    > If installed via [install.sh](install.sh) `rlwrap` will provide auto-complete.
+    > If installed via [install.sh](install.sh) `rlwrap` will enable auto-complete.
 
 ### Include
 
-You can also include Shellper into your existing scripts or build entirely new scripts with just Shellper functions.
+You can include Shellper in your existing scripts or build entirely new scripts with just Shellper functions.
 
-You can invoke the installer and include Shellper on the fly.
+```bash
+#!/bin/bash
+source shellper.sh
+```
 
 ## Examples
 
-### Quick LAMP [install-lamp.sh](examples/install-lamp.sh)
+### Quick LAMP
 
-Provisions a performance oriented PHP web server with the following:
+```bash
+#!/bin/bash
+git clone https://github.com/carmelosantana/shellper
+cd shellper/examples
+chmod +x install-lamp.sh
+./install-lamp.sh
+```
 
-- Update system
+> `sudo` or root access is required for install.
+
+Provisions a simple performance oriented PHP web server.
+
+The following will be installed and configured:
+
 - Add [Ondřej Surý](https://launchpad.net/~ondrej/+archive/ubuntu/php/) PPA for latest stable releases
 - Apache
   - Enables `mod_event`
 - PHP
 - PHP-FPM
-- Prompts the user to select MariaDB or MySQL
-- memcached
+- User prompt to select MariaDB or MySQL
 - Postfix
 
 ## Support
