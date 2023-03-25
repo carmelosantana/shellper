@@ -6,11 +6,11 @@ SHELLPER_COMMAND_NOT_FOUND="Command not found"
 SHELLPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)" # https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself?answertab=votes#tab-top
 SHELLPER_HELP_AUTOCOMPLETE="• Press [tab ⇄] to show command suggestions."
 SHELLPER_HELP_START="Type a command: "
-SHELLPER_VERSION="0.3.0"
+SHELLPER_VERSION="0.4.0"
 
 # Versions supported
-GEEKBENCH_VERSION="5.4.5"
-PHP_VERSION="8.1"
+GEEKBENCH_VERSION="6.0.1"
+PHP_VERSION="8.2"
 RKHUNTER_VERSION="1.4.6"
 
 #  +----------------+
