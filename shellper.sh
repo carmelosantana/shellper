@@ -372,10 +372,12 @@ function install_mysql_to_sqlite3 {
 }
 
 function install_ondrej_apache {
+	setup_ondrej_apache_repository
 	sudo apt install -y apache2 apache2-utils
 }
 
 function install_ondrej_php {
+	setup_ondrej_php_repository
 	if [ ! -n "$1" ]; then
 		PHP="php$PHP_VERSION"
 	else
