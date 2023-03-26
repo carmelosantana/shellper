@@ -86,7 +86,7 @@ function apache_restart {
 function apt_update_upgrade {
 	sudo apt update
 	# https://bugs.launchpad.net/ubuntu/+source/ansible/+bug/1833013 - 1/2/2020
-	UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qq -y upgrade
+	sudo UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qq -y upgrade
 }
 
 function ask_mariadb_mysql {
