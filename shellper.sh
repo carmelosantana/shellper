@@ -6,11 +6,11 @@ SHELLPER_COMMAND_NOT_FOUND="Command not found"
 SHELLPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)" # https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself?answertab=votes#tab-top
 SHELLPER_HELP_AUTOCOMPLETE="• Press [tab ⇄] to show command suggestions."
 SHELLPER_HELP_START="Type a command: "
-SHELLPER_VERSION="0.3.0"
+SHELLPER_VERSION="0.4.0"
 
 # Versions supported
-GEEKBENCH_VERSION="5.4.5"
-PHP_VERSION="8.1"
+GEEKBENCH_VERSION="6.0.1"
+PHP_VERSION="8.2"
 RKHUNTER_VERSION="1.4.6"
 
 #  +----------------+
@@ -86,7 +86,7 @@ function apache_restart {
 function apt_update_upgrade {
 	sudo apt update
 	# https://bugs.launchpad.net/ubuntu/+source/ansible/+bug/1833013 - 1/2/2020
-	UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qq -y upgrade
+	sudo UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -qq -y upgrade
 }
 
 function ask_mariadb_mysql {
@@ -372,10 +372,12 @@ function install_mysql_to_sqlite3 {
 }
 
 function install_ondrej_apache {
+	setup_ondrej_apache_repository
 	sudo apt install -y apache2 apache2-utils
 }
 
 function install_ondrej_php {
+	setup_ondrej_php_repository
 	if [ ! -n "$1" ]; then
 		PHP="php$PHP_VERSION"
 	else
