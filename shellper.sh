@@ -6,7 +6,7 @@ SHELLPER_COMMAND_NOT_FOUND="Command not found"
 SHELLPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)" # https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself?answertab=votes#tab-top
 SHELLPER_HELP_AUTOCOMPLETE="• Press [tab ⇄] to show command suggestions."
 SHELLPER_HELP_START="Type a command: "
-SHELLPER_VERSION="0.4.0"
+SHELLPER_VERSION="0.4.1"
 
 # Versions supported
 GEEKBENCH_VERSION="6.0.1"
@@ -742,29 +742,43 @@ function setup_syncthing {
 		OWNER="$1"
 	fi
 
+	# Get OWNER home directory
+	OWNER_HOME=$(eval echo "~$OWNER")
+
+	# Check if permissions are correct to OWNER_HOME, if not update
+	if [ "$(stat -c %U "$OWNER_HOME")" != "$OWNER" ]; then
+		sudo chown -Rv "$OWNER":"$OWNER" "$OWNER_HOME"
+	fi
+
 	sudo systemctl start "syncthing@${OWNER}.service"
-	sleep 30
+	
+	echo "Waiting for Syncthing to start..."
+	sleep 15
+	
 	sudo systemctl stop "syncthing@${OWNER}.service"
 
-	if [ "$2" = "1" ]; then
-		SYNCTHING_PATH=$(eval echo "~$OWNER")"/.config/syncthing/config.xml"
-		if [ -f "$SYNCTHING_PATH" ]; then
-			OWNER="www-data"
-			sed -i "s/127.0.0.1:8384/0.0.0.0:8384/g" "$SYNCTHING_PATH"
-		else
-			echo "setup_syncthing() can't find Syncthing config"
-		fi
+	# Update Syncthing config to listen on all interfaces
+	SYNCTHING_PATH="$OWNER_HOME/.config/syncthing/config.xml"
+	if [ -f "$SYNCTHING_PATH" ]; then
+		sed -i "s/127.0.0.1:8384/0.0.0.0:8384/g" "$SYNCTHING_PATH"
+	else
+		echo "setup_syncthing() can't find Syncthing config"
+		return 1
 	fi
 
 	# https://docs.syncthing.net/users/firewall.html
-	if [ "$3" = "firewalld" ] || [ "$4" = "firewalld" ]; then
+	# Check if firewalld is installed and enabled
+	if [ "$(systemctl is-enabled firewalld)" = "enabled" ]; then
 		sudo firewall-cmd --zone=public --add-service=syncthing --permanent
 		sudo firewall-cmd --reload
 	fi
 
-	if [ "$3" = "ufw" ] || [ "$4" = "ufw" ]; then
-		sudo ufw allow 22000:23000/tcp
-	fi
+	# Check if ufw is installed and enabled
+	if [ "$(systemctl is-enabled ufw)" = "enabled" ]; then
+		sudo ufw allow syncthing
+		sudo ufw allow syncthing-gui
+		sudo ufw reload
+	fi	
 
 	# Fix filesytem error.
 	sudo echo "fs.inotify.max_user_watches=204800" | sudo tee -a /etc/sysctl.conf
@@ -772,6 +786,12 @@ function setup_syncthing {
 	# https://docs.syncthing.net/users/autostart.html
 	sudo systemctl enable "syncthing@${OWNER}.service"
 	sudo systemctl start "syncthing@${OWNER}.service"
+
+	echo "Waiting for Syncthing to start..."
+	sleep 3
+
+	# Check if Syncthing is running
+	echo "$(systemctl status "syncthing@${OWNER}.service")"
 }
 
 function setup_unattended_upgrades {
